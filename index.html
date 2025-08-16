@@ -1,335 +1,211 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Vicentinos Challenge</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{
-    background:#003366;color:#0f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;
-    font-family:'Inter',sans-serif;text-shadow:0 0 5px #0f0;overflow-x:hidden
-  }
-  .banner{width:100%;height:160px;background:url('https://i.postimg.cc/gjRyvHHM/wp2896798.jpg') center/cover no-repeat;border-bottom:4px solid #0f0;display:flex;justify-content:center;align-items:center}
-  .titulo{font-size:2rem;font-weight:700;color:#fff;text-shadow:0 0 10px #0f0,0 0 20px #0f0;text-align:center;letter-spacing:1px}
-  .container{margin:16px auto;background:rgba(0,0,0,.85);padding:18px;border-radius:12px;width:92%;max-width:760px;border:1px solid #0f0;box-shadow:0 0 15px #0f0}
-  h2{color:#0f0;margin-bottom:12px;text-align:center;font-size:1.25rem;font-weight:600}
-  input,button,select{margin:8px 0;padding:12px;width:100%;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:1rem}
-  input,select{background:#111;color:#0f0;border:1px solid #0f0}
-  button{background:#0f0;color:#000;font-weight:bold;cursor:pointer;transition:.25s}
-  button:hover{transform:scale(1.03)}
-  .fila{display:flex;gap:8px}
-  .fila>*{flex:1}
-  .toast{position:fixed;top:16px;right:16px;background:#111;border:1px solid #0f0;color:#0f0;padding:10px 14px;border-radius:8px;opacity:0;transform:translateY(-8px);transition:.3s;z-index:1000}
-  .toast.show{opacity:1;transform:none}
-  .temporizador{width:100%;height:18px;background:#111;border-radius:10px;margin:10px 0;overflow:hidden;position:relative;border:1px solid #0f0}
-  .barra-tiempo{height:100%;width:100%;background:#0f0}
-  .jugador-corriendo{position:absolute;top:-6px;left:0;width:28px;height:14px;background:url('https://cdn-icons-png.flaticon.com/512/723/723943.png') no-repeat center/contain;transition:left 1s linear;z-index:2}
-  .pregunta{margin:10px 0;font-size:1.05rem;line-height:1.5}
-  .opciones button{margin:6px 4px;background:#111;color:#0f0;font-size:.95rem;padding:10px 12px;border:1px solid #0f0;width:auto}
-  .grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:920px){.grid{grid-template-columns:1fr 1fr}}
-  .panel{background:#000;border:1px solid #0f0;border-radius:10px;padding:10px;max-height:320px;overflow:auto}
-  .msg{margin:6px 0;padding:6px;background:rgba(0,255,0,0.08);border-left:3px solid #0f0;display:flex;gap:8px;align-items:flex-start}
-  .alias{font-weight:700;margin-right:6px}
-  .ranking .item{padding:6px;border-bottom:1px dashed rgba(0,255,0,.3)}
-  .tienda button{display:block;width:100%;margin-top:8px}
-  .small{font-size:.9rem;opacity:.9}
-</style>
+  <meta charset="UTF-8">
+  <title>Vicentinos Challenge - Trivia Rugby</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+    h1 { color: #333; text-align:center; }
+    .game, .chat { margin: 20px auto; padding: 15px; background: #fff; border-radius: 5px; max-width: 600px; }
+    .messages { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fafafa; }
+    .message { margin: 5px 0; }
+    .question { font-size: 18px; margin: 15px 0; }
+    .options button { display:block; width:100%; margin:5px 0; padding:10px; font-size:16px; }
+    #timerBar { height: 20px; background: #4caf50; width: 100%; transition: width 1s linear; border-radius: 5px; }
+    #rugbyBall { width:20px; height:20px; background:url('https://cdn-icons-png.flaticon.com/512/146/146701.png') no-repeat center/contain; float:right; }
+    .confetti { position: fixed; width: 10px; height: 10px; background: gold; animation: fall 3s linear forwards; }
+    @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity:0; } }
+    .shake { animation: shake 0.5s; }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+  </style>
 </head>
 <body>
+  <h1>Vicentinos Challenge 🏉</h1>
 
-<!-- Sonidos -->
-<audio id="sBien" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opening-2034.mp3"></audio>
-<audio id="sApuesta" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-drop-384.mp3"></audio>
-<audio id="sOk" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
-<audio id="sBad" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-946.mp3"></audio>
-<audio id="sChat" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
-
-<div class="banner">
-  <div class="titulo">Vicentinos Challenge 🏉🔥</div>
-</div>
-
-<div id="toast" class="toast"></div>
-
-<!-- LOGIN / INICIO -->
-<div class="container" id="inicio">
-  <h2>🎮 Tu nombre de guerra</h2>
-  <p class="small" style="text-align:center;margin-bottom:10px;">Preparate para ir por los puntos</p>
-  <div class="fila">
-    <input type="text" id="alias" maxlength="24" placeholder="Tu alias (ej: Pumita10)" />
-    <button id="btnJugar">¡JUGAR!</button>
-  </div>
-  <p class="small">💡 Si ya existe el alias, retomás tu progreso. Si es nuevo, te creamos la cuenta.</p>
-</div>
-
-<!-- INFO JUGADOR + JUEGO -->
-<div class="container" id="juego" style="display:none;">
-  <h2><span id="nivel-texto">Nivel 1</span> — <span id="nivel-titulo">Iniciación</span></h2>
-  <div class="fila">
-    <div><strong>Jugador:</strong> <span id="jugador-nombre"></span></div>
-    <div><strong>Monedas:</strong> <span id="monedas">0</span></div>
-    <div><strong>Preguntas:</strong> <span id="pregs">0/5</span></div>
-  </div>
-
-  <div class="temporizador">
-    <div class="barra-tiempo" id="barra"></div>
-    <div class="jugador-corriendo" id="runner"></div>
-  </div>
-
-  <!-- Apuesta -->
-  <div id="fase-apuesta">
-    <label>¿Cuánto apostás? (mínimo 500)</label>
-    <div class="fila">
-      <input type="number" id="apuesta" min="500" step="100" value="500" />
-      <button id="btnIniciarPregunta">➡️ Jugar Pregunta</button>
+  <!-- Juego -->
+  <div class="game">
+    <h2>Trivia de Rugby</h2>
+    <p><b>Nivel:</b> <span id="level">1</span> / 15</p>
+    <p><b>Monedas:</b> <span id="coins">1500</span></p>
+    <p><b>Apuesta:</b> <input type="number" id="bet" min="500" step="100" value="500"> </p>
+    <button onclick="startQuestion()">Apostar y jugar</button>
+    <div id="questionBox" style="display:none;">
+      <p id="question" class="question"></p>
+      <div class="options" id="options"></div>
+      <div id="timerContainer"><div id="timerBar"><div id="rugbyBall"></div></div></div>
     </div>
   </div>
 
-  <!-- Pregunta -->
-  <div id="preguntaBox" style="display:none;">
-    <div class="pregunta"><p id="txtPregunta"></p></div>
-    <div class="opciones" id="opciones"></div>
-  </div>
-</div>
-
-<!-- CHAT + RANKING + TIENDA -->
-<div class="grid" style="width:92%;max-width:760px;">
-  <div class="container">
-    <h2>💬 Chat del Estadio</h2>
-    <div class="fila">
-      <input type="text" id="msg" placeholder="¡Mandá tu picardía!" />
-      <button id="btnEnviar" style="width:auto;">Enviar</button>
-    </div>
-    <div class="panel" id="chat"></div>
+  <!-- Chat -->
+  <div class="chat">
+    <h2>Chat en vivo 💬</h2>
+    <div class="messages" id="messages"></div>
+    <input type="text" id="chatInput" placeholder="Escribe un mensaje..." />
+    <button onclick="sendMessage()">Enviar</button>
   </div>
 
-  <div class="container">
-    <h2>🏆 Ranking</h2>
-    <div class="panel ranking" id="ranking"></div>
-  </div>
+  <!-- Audios -->
+  <audio id="soundCorrect" src="https://www.fesliyanstudios.com/play-mp3/387"></audio>
+  <audio id="soundWrong" src="https://www.fesliyanstudios.com/play-mp3/438"></audio>
+  <audio id="soundCrowd" src="https://www.fesliyanstudios.com/play-mp3/6486"></audio>
 
-  <div class="container tienda">
-    <h2>🛒 Tienda de Monedas</h2>
-    <p class="small" style="margin-bottom:8px;">Serás redirigido a Mercado Pago. <br>Luego <strong>compartí el comprobante</strong> por chat y el admin acreditará las monedas a tu alias.</p>
-    <button data-url="https://mpago.la/16CyPeY" data-amount="2000">Comprar Pack $2.000 → 2.000 monedas</button>
-    <button data-url="https://mpago.la/1TTVVcV" data-amount="5000">Comprar Pack $5.000 → 5.000 monedas</button>
-    <button data-url="https://mpago.la/2HR6fjA" data-amount="10000">Comprar Pack $10.000 → 10.000 monedas</button>
-  </div>
-</div>
+  <script>
+    // 🔑 Claves Supabase
+    const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-<script>
-/* ====== CONFIG SUPABASE ====== */
-const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let coins = 1500;
+    let level = 1;
+    let usedQuestions = [];
+    let timer, timeLeft;
+    let trainingQuestions = 3;
 
-/* ====== UI ====== */
-const $ = (id)=>document.getElementById(id);
-const toast = (t)=>{ const el=$("toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2000); };
-const play = (id)=>{ const a=$(id); if(!a) return; a.currentTime=0; a.play().catch(()=>{}); };
+    // Preguntas
+    const questions = [
+      // ✅ Fáciles (niveles 1-5)
+      {q:"¿Cuántos jugadores hay en un equipo de rugby union?", options:["11","13","15"], a:2, lvl:1},
+      {q:"¿Cuántos puntos vale un try?", options:["3","5","7"], a:1, lvl:1},
+      {q:"¿Cómo se llama el máximo torneo entre selecciones del hemisferio sur?", options:["Rugby Championship","6 Naciones","Tri Nations"], a:0, lvl:2},
+      {q:"¿Cuánto dura cada tiempo en un partido oficial?", options:["30 min","40 min","45 min"], a:1, lvl:2},
+      {q:"¿Qué país ganó la primera Copa del Mundo en 1987?", options:["Nueva Zelanda","Inglaterra","Sudáfrica"], a:0, lvl:3},
+      // ✅ Medias (niveles 6-10)
+      {q:"¿Qué jugador es conocido como 'La Bestia'?", options:["Tendai Mtawarira","Richie McCaw","Sergio Parisse"], a:0, lvl:6},
+      {q:"¿Cuál es la regla del 'knock-on'?", options:["Patear hacia delante","Pasar hacia delante","Dejar caer el balón hacia adelante"], a:2, lvl:6},
+      {q:"¿Cuántos puntos vale un drop goal?", options:["2","3","4"], a:1, lvl:7},
+      {q:"¿Qué selección es llamada 'Los Pumas'?", options:["Argentina","Uruguay","Chile"], a:0, lvl:7},
+      {q:"¿Qué capitán levantó la copa para Sudáfrica en 1995?", options:["Francois Pienaar","John Smit","Siya Kolisi"], a:0, lvl:8},
+      // ✅ Difíciles (niveles 11-13)
+      {q:"¿En qué año se introdujo la tarjeta amarilla en el rugby?", options:["1995","2000","2003"], a:2, lvl:11},
+      {q:"¿Cuál es la distancia mínima de un line-out?", options:["2 metros","5 metros","10 metros"], a:1, lvl:12},
+      {q:"¿Qué jugador ostenta el récord de más tries en Copas del Mundo?", options:["Jonah Lomu","Bryan Habana","Daisuke Ohata"], a:1, lvl:13},
+      // ✅ Casi imposibles (niveles 14-15)
+      {q:"¿Quién fue el árbitro de la final del Mundial 1991?", options:["Derek Bevan","Ed Morrison","Paddy O'Brien"], a:0, lvl:14},
+      {q:"¿Cuántos espectadores asistieron a la final del Mundial 2015 en Twickenham?", options:["80,125","82,245","83,312"], a:1, lvl:15}
+    ];
 
-/* ====== ESTADO ====== */
-let me = null; // {id, alias, role, coins, blocked}
-let nivel = 1, preguntasRespondidas = 0, ronda = [];
-let temporizador = null, tiempo = 20;
-
-/* ====== PREGUNTAS ====== */
-const titulosNivel = [
-  "Iniciación","Primeros Pasos","Táctica Básica","Medio Campo","Delanteros",
-  "Backs","Estrategia","Torneos Sudam","Campeón Nacional","Internacional",
-  "Copa Mundial","Semifinalista","Finalista","Clase Mundial I","Clase Mundial II"
-];
-const banco = [
-  {q:"¿Cuántos jugadores tiene un equipo de rugby 15?",o:["13","15","11","7"],c:1},
-  {q:"¿Cuántos puntos vale un try?",o:["3","5","6","7"],c:1},
-  {q:"¿Qué país ganó el Mundial de Rugby 2023?",o:["Francia","Inglaterra","Sudáfrica","Nueva Zelanda"],c:2},
-  {q:"¿Quién es 'El Mago' en el rugby argentino?",o:["Hugo Porta","Agustín Pichot","Felipe Contepomi","Jerónimo de la Fuente"],c:0},
-  {q:"¿Qué posición inicia con kickoff?",o:["Fullback","Apertura","Wing","Pilar"],c:0},
-  {q:"¿Sanción por tackle alto?",o:["Puntapié de mitad","Penal","Try","Tarjeta amarilla"],c:1},
-  {q:"¿Año de ingreso al Rugby Championship?",o:["2010","2012","2014","2016"],c:1},
-  {q:"¿Qué es un 'ruck'?",o:["Formación de 8","Lucha por el balón en el suelo","Pase hacia atrás","Patada de castigo"],c:1},
-  {q:"Capitán de Los Pumas 2007",o:["Agustín Pichot","Juan M. Hernández","Felipe Contepomi","Omar Hasan"],c:0},
-  {q:"Duración de un partido de rugby",o:["60","70","80","90"],c:2}
-];
-const mix = (arr)=>[...arr].sort(()=>Math.random()-0.5);
-
-/* ====== LOGIN ====== */
-$("btnJugar").onclick = async ()=>{
-  const alias = $("alias").value.trim();
-  if(!alias) return toast("Ingresá un alias");
-  // buscar / crear
-  let { data: user, error } = await supabase.from("users").select("*").eq("alias", alias).maybeSingle();
-  if(error){ toast("Error al buscar usuario"); return; }
-  if(!user){
-    const ins = await supabase.from("users").insert([{ alias, role:"player", coins:0, blocked:false }]).select().single();
-    if(ins.error){ toast("No se pudo crear el usuario"); return; }
-    user = ins.data;
-  }
-  if(user.blocked){ toast("⛔ Estás bloqueado"); return; }
-  me = user;
-  play("sBien");
-  $("inicio").style.display="none";
-  $("juego").style.display="block";
-  $("jugador-nombre").textContent = me.alias;
-  actualizarTop();
-  nuevaRonda();
-  suscribirChat();
-  cargarChat();
-  setInterval(cargarRanking, 5000);
-};
-
-/* ====== RONDA / PREGUNTAS ====== */
-function actualizarTop(){
-  $("monedas").textContent = me.coins ?? 0;
-  $("nivel-texto").textContent = `Nivel ${nivel}`;
-  $("nivel-titulo").textContent = titulosNivel[nivel-1] || "Leyenda";
-  $("pregs").textContent = `${preguntasRespondidas}/5`;
-}
-function nuevaRonda(){
-  ronda = mix(banco).slice(0,5);
-  preguntasRespondidas = 0;
-  mostrarApuesta();
-  actualizarTop();
-}
-function mostrarApuesta(){
-  clearInterval(temporizador);
-  $("fase-apuesta").style.display="block";
-  $("preguntaBox").style.display="none";
-  $("barra").style.width="100%";
-  $("runner").style.left="0";
-}
-$("btnIniciarPregunta").onclick = ()=>{
-  const apuesta = parseInt($("apuesta").value,10);
-  if(isNaN(apuesta) || apuesta<500) return toast("Mínimo 500");
-  if(apuesta > (me.coins||0)) return toast("No tenés monedas suficientes");
-  play("sApuesta");
-  // registrar la intención de apuesta en recaudación (transacción positiva)
-  supabase.from("transactions").insert([{ user_id: me.id, type:"apuesta", amount: apuesta }]).then(()=>{});
-  // mostrar pregunta
-  const p = ronda[preguntasRespondidas];
-  $("txtPregunta").textContent = p.q;
-  const ops = $("opciones"); ops.innerHTML="";
-  p.o.forEach((txt,idx)=>{
-    const b=document.createElement("button");
-    b.textContent = txt;
-    b.onclick = ()=>verificar(idx, p.c, apuesta);
-    ops.appendChild(b);
-  });
-  $("fase-apuesta").style.display="none";
-  $("preguntaBox").style.display="block";
-  // temporizador
-  tiempo=20;
-  correrTimer(apuesta, p.c, true);
-};
-function correrTimer(apuesta, correcta){
-  clearInterval(temporizador);
-  const barra=$("barra"), run=$("runner");
-  temporizador = setInterval(()=>{
-    tiempo--;
-    const porc = Math.max(0,(tiempo/20)*100);
-    barra.style.width = porc+"%";
-    run.style.left = (100-porc)+"%";
-    if(tiempo<=0){
-      clearInterval(temporizador);
-      perder(apuesta);
-      siguiente();
+    // Función para elegir pregunta aleatoria por nivel
+    function getQuestion(lvl){
+      let pool = questions.filter(q => q.lvl <= lvl && !usedQuestions.includes(q.q));
+      if(pool.length === 0) return null;
+      let q = pool[Math.floor(Math.random()*pool.length)];
+      usedQuestions.push(q.q);
+      return q;
     }
-  },1000);
-}
-async function verificar(idx, correcta, apuesta){
-  clearInterval(temporizador);
-  if(idx===correcta){
-    // gana
-    me.coins = (me.coins||0)+apuesta;
-    await supabase.from("users").update({ coins: me.coins }).eq("id", me.id);
-    play("sOk");
-    toast(`✅ ¡Correcto! +${apuesta}`);
-  }else{
-    perder(apuesta);
-  }
-  actualizarTop();
-  siguiente();
-}
-async function perder(apuesta){
-  me.coins = Math.max(0,(me.coins||0)-apuesta);
-  await supabase.from("users").update({ coins: me.coins }).eq("id", me.id);
-  play("sBad");
-  toast(`❌ Incorrecto / tiempo. -${apuesta}`);
-}
-function siguiente(){
-  preguntasRespondidas++;
-  if(preguntasRespondidas>=5){
-    nivel = Math.min(15, nivel+1);
-    toast(`⬆️ ¡Subiste a Nivel ${nivel}!`);
-    nuevaRonda();
-  }else{
-    mostrarApuesta();
-  }
-  actualizarTop();
-}
 
-/* ====== CHAT ====== */
-$("btnEnviar").onclick = async ()=>{
-  if(!me) return;
-  if(me.blocked) return toast("⛔ Bloqueado para chatear");
-  const m = $("msg").value.trim();
-  if(!m) return;
-  $("msg").value="";
-  play("sChat");
-  await supabase.from("messages").insert([{ user_id: me.id, alias: me.alias, message: m }]);
-};
-async function cargarChat(){
-  const { data } = await supabase.from("messages").select("*").order("created_at",{ascending:false}).limit(50);
-  pintarChat((data||[]).reverse());
-}
-function pintarChat(rows){
-  const c=$("chat"); c.innerHTML="";
-  rows.forEach(r=>{
-    const d=document.createElement("div");
-    d.className="msg";
-    d.innerHTML = `<span class="alias">${r.alias}:</span> <span>${r.message}</span>`;
-    c.appendChild(d);
-  });
-  c.scrollTop=c.scrollHeight;
-}
-function suscribirChat(){
-  const ch = supabase.channel('realtime:messages')
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, payload=>{
-      const r = payload.new;
-      const c=$("chat");
-      const d=document.createElement("div");
-      d.className="msg";
-      d.innerHTML=`<span class="alias">${r.alias}:</span> <span>${r.message}</span>`;
-      c.appendChild(d);
-      c.scrollTop=c.scrollHeight;
-    }).subscribe();
-}
+    function startQuestion(){
+      const bet = parseInt(document.getElementById("bet").value);
+      if(bet < 500){ alert("La apuesta mínima es 500 monedas."); return; }
+      if(bet > coins){ alert("No tienes suficientes monedas."); return; }
 
-/* ====== RANKING ====== */
-async function cargarRanking(){
-  const { data, error } = await supabase.from("ranking_jugadores").select("*");
-  const cont=$("ranking"); cont.innerHTML="";
-  (data||[]).forEach((r,i)=>{
-    const el=document.createElement("div");
-    el.className="item";
-    el.textContent = `#${i+1} ${r.alias} — $${r.coins}`;
-    cont.appendChild(el);
-  });
-}
-setInterval(()=>{ if(me) cargarRanking(); }, 12000);
+      if(level > 15){ alert("Juego completado 🎉"); return; }
 
-/* ====== TIENDA ====== */
-document.querySelectorAll(".tienda button").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const url = btn.getAttribute("data-url");
-    const amount = btn.getAttribute("data-amount");
-    toast(`Vas a Mercado Pago por ${amount} monedas. Luego compartí el comprobante en el chat y el admin acreditará.`);
-    window.open(url, "_blank");
-  });
-});
-</script>
+      if(trainingQuestions <= 0 && coins < 500){
+        alert("⚠️ Te quedaste sin monedas. Compra más para seguir jugando.");
+        return;
+      }
+
+      currentQ = getQuestion(level);
+      if(!currentQ){ alert("No hay más preguntas disponibles."); return; }
+
+      document.getElementById("questionBox").style.display="block";
+      document.getElementById("question").textContent=currentQ.q;
+      let optDiv=document.getElementById("options");
+      optDiv.innerHTML="";
+      currentQ.options.forEach((opt,i)=>{
+        let btn=document.createElement("button");
+        btn.textContent=opt;
+        btn.onclick=()=>answer(i,bet);
+        optDiv.appendChild(btn);
+      });
+
+      startTimer();
+    }
+
+    function startTimer(){
+      clearInterval(timer);
+      timeLeft=20;
+      let bar=document.getElementById("timerBar");
+      bar.style.width="100%";
+      timer=setInterval(()=>{
+        timeLeft--;
+        bar.style.width=(timeLeft/20*100)+"%";
+        if(timeLeft<=0){
+          clearInterval(timer);
+          answer(-1,parseInt(document.getElementById("bet").value)); // tiempo agotado
+        }
+      },1000);
+    }
+
+    function answer(choice,bet){
+      clearInterval(timer);
+      if(choice===currentQ.a){
+        coins+=bet;
+        level++;
+        document.getElementById("coins").textContent=coins;
+        document.getElementById("level").textContent=level;
+        document.getElementById("soundCorrect").play();
+        document.getElementById("soundCrowd").play();
+        launchConfetti();
+        alert("✅ Correcto! Ganaste "+bet+" monedas.");
+      } else {
+        coins-=bet;
+        if(trainingQuestions>0) trainingQuestions--;
+        document.getElementById("coins").textContent=coins;
+        document.getElementById("soundWrong").play();
+        document.querySelector(".game").classList.add("shake");
+        setTimeout(()=>document.querySelector(".game").classList.remove("shake"),500);
+        alert("❌ Incorrecto. Perdiste "+bet+" monedas.");
+      }
+      document.getElementById("questionBox").style.display="none";
+    }
+
+    function launchConfetti(){
+      for(let i=0;i<30;i++){
+        let conf=document.createElement("div");
+        conf.className="confetti";
+        conf.style.left=Math.random()*100+"vw";
+        conf.style.background=["gold","red","green","blue"][Math.floor(Math.random()*4)];
+        conf.style.animationDuration=(2+Math.random()*3)+"s";
+        document.body.appendChild(conf);
+        setTimeout(()=>conf.remove(),3000);
+      }
+    }
+
+    // Chat
+    async function loadMessages() {
+      let { data } = await supabase.from("messages").select("*").order("created_at", { ascending: true });
+      const msgDiv = document.getElementById("messages");
+      msgDiv.innerHTML = "";
+      data.forEach(m => {
+        msgDiv.innerHTML += `<div class="message"><b>${m.username}:</b> ${m.content}</div>`;
+      });
+      msgDiv.scrollTop = msgDiv.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("chatInput");
+      if (input.value.trim() === "") return;
+      await supabase.from("messages").insert([{ username: "Jugador", content: input.value }]);
+      input.value = "";
+    }
+
+    // Realtime para chat
+    supabase.channel('chat-room')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+        loadMessages();
+      })
+      .subscribe();
+
+    // Inicialización
+    loadMessages();
+  </script>
 </body>
 </html>
