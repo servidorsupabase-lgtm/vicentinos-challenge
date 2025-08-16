@@ -26,23 +26,48 @@
       overflow-x: hidden;
     }
 
-    /* Bienvenida corta */
-    .bienvenida {
+    /* Notificaciones */
+    .noti-container {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
       flex-direction: column;
+      gap: 10px;
+      max-width: 300px;
     }
-    .bienvenida h1 {
-      font-family: 'Inter', sans-serif;
-      font-size: 2rem;
+    .noti {
+      background: rgba(0, 0, 0, 0.9);
       color: #0f0;
-      text-shadow: 0 0 10px #0f0;
+      padding: 12px 16px;
+      border-left: 4px solid #0f0;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      box-shadow: 0 0 10px #0f0;
+      animation: slideIn 0.3s forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Bienvenida pequeña */
+    #bienvenida {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: #0f0;
+      padding: 20px 30px;
+      border-radius: 12px;
+      font-size: 1.3rem;
+      text-align: center;
+      z-index: 1000;
+      border: 1px solid #0f0;
+      box-shadow: 0 0 15px #0f0;
+      display: none;
     }
 
     /* Banner */
@@ -55,6 +80,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      margin-top: 20px;
     }
     .titulo {
       font-size: 2.2rem;
@@ -205,10 +231,19 @@
 </head>
 <body>
 
-  <!-- Bienvenida 2 segundos -->
-  <div class="bienvenida" id="bienvenida">
-    <h1>¡Bienvenido al desafío!</h1>
-  </div>
+  <!-- Sonidos -->
+  <audio id="soundBienvenida" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opening-2034.mp3"></audio>
+  <audio id="soundApuesta" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-drop-384.mp3"></audio>
+  <audio id="soundCorrecto" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+  <audio id="soundIncorrecto" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-946.mp3"></audio>
+  <audio id="soundNivel" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3"></audio>
+  <audio id="soundChat" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
+
+  <!-- Notificaciones -->
+  <div class="noti-container" id="notificaciones"></div>
+
+  <!-- Bienvenida -->
+  <div id="bienvenida">¡Bienvenido al desafío!</div>
 
   <!-- Pelotas flotando -->
   <script>
@@ -290,6 +325,26 @@
   </div>
 
   <script>
+    // Sonidos
+    const play = (id) => {
+      const sound = document.getElementById(id);
+      if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(() => {});
+      }
+    };
+
+    // Notificaciones
+    const notificar = (mensaje, duracion = 3000) => {
+      const noti = document.createElement("div");
+      noti.className = "noti";
+      noti.textContent = mensaje;
+      document.getElementById("notificaciones").appendChild(noti);
+      setTimeout(() => {
+        noti.remove();
+      }, duracion);
+    };
+
     // Inicializar Supabase
     const supabase = supabase.createClient(
       'https://aqkqbtunbyifbfrvkpxv.supabase.co',
@@ -305,7 +360,7 @@
     const TOKEN_ADMIN = "20250819802006";
     let gratisUsadas = 0;
 
-    // Preguntas (80 preguntas, dificultad progresiva)
+    // Preguntas (ejemplo, puedes agregar hasta 80)
     const preguntas = [
       { q: "¿Cuántos jugadores tiene un equipo de rugby 15?", o: ["13", "15", "11", "7"], c: 1 },
       { q: "¿Cuántos puntos vale un try?", o: ["3", "5", "6", "7"], c: 1 },
@@ -316,11 +371,12 @@
       { q: "¿En qué año Argentina ingresó al Rugby Championship?", o: ["2010", "2012", "2014", "2016"], c: 1 },
       { q: "¿Qué es un 'ruck'?", o: ["Formación de 8", "Lucha por el balón en el suelo", "Pase hacia atrás", "Patada de castigo"], c: 1 },
       { q: "¿Quién fue el capitán de Los Pumas en el Mundial 2007?", o: ["Agustín Pichot", "Juan Martín Hernández", "Felipe Contepomi", "Omar Hasan"], c: 0 },
-      { q: "¿Cuál es la duración de un partido de rugby?", o: ["60 min", "70 min", "80 min", "90 min"], c: 2 },
-      // ... (más preguntas, hasta 80)
+      { q: "¿Cuál es la duración de un partido de rugby?", o: ["60 min", "70 min", "80 min", "90 min"], c: 2 }
     ];
 
     // Bienvenida: 2 segundos
+    document.getElementById("bienvenida").style.display = "block";
+    play("soundBienvenida");
     setTimeout(() => {
       document.getElementById("bienvenida").style.display = "none";
     }, 2000);
@@ -346,6 +402,7 @@
       } else {
         jugador = data[0];
         document.getElementById("inicio").style.display = "none";
+        notificar(`¡Bienvenido, ${alias}!`, 2000);
         mostrarEntrenamiento();
       }
     }
@@ -372,7 +429,8 @@
     function iniciarPregunta() {
       if (gratisUsadas < 3) {
         gratisUsadas++;
-        alert(`¡Pregunta gratuita! Te quedan ${3 - gratisUsadas} más.`);
+        notificar(`¡Pregunta gratuita! Te quedan ${3 - gratisUsadas}`);
+        play("soundApuesta");
         mostrarPregunta();
         return;
       }
@@ -381,6 +439,8 @@
       if (isNaN(apuesta) || apuesta < 500) return alert("Apuesta mínima: $500");
       if (apuesta > jugador.coins) return alert("No tenés suficientes monedas");
 
+      play("soundApuesta");
+      notificar(`Apuesta de $${apuesta} realizada`, 2000);
       mostrarPregunta(apuesta);
     }
 
@@ -412,7 +472,8 @@
 
         if (tiempoRestante <= 0) {
           clearInterval(temporizador);
-          alert("⏰ ¡Tiempo agotado! Respuesta incorrecta.");
+          play("soundIncorrecto");
+          notificar("⏰ ¡Tiempo agotado!", 3000);
           if (apuesta > 0) {
             jugador.coins -= apuesta;
             actualizarMonedas();
@@ -432,12 +493,14 @@
       if (acierto) {
         if (apuesta > 0) {
           jugador.coins += apuesta;
-          alert(`¡Correcto! Ganaste $${apuesta}`);
+          play("soundCorrecto");
+          notificar(`¡Correcto! Ganaste $${apuesta}`, 3000);
         }
       } else {
         if (apuesta > 0) {
           jugador.coins -= apuesta;
-          alert(`¡Incorrecto! Perdiste $${apuesta}`);
+          play("soundIncorrecto");
+          notificar(`❌ Incorrecto. Perdiste $${apuesta}`, 3000);
         }
       }
       actualizarMonedas();
@@ -455,7 +518,8 @@
 
     function avanzarNivel() {
       jugador.level++;
-      alert(`¡Subiste al Nivel ${jugador.level}!`);
+      play("soundNivel");
+      notificar(`🎉 ¡Subiste al Nivel ${jugador.level}!`, 4000);
       nuevaRonda();
     }
 
@@ -465,7 +529,7 @@
       const cant = parseInt(document.getElementById("admin-monedas").value);
       if (!alias || isNaN(cant)) return alert("Datos inválidos");
       await supabase.rpc('update_user_coins', { uname: alias, amount: cant });
-      alert(`✅ $${cant} cargadas a ${alias}`);
+      notificar(`✅ $${cant} cargadas a ${alias}`);
     }
 
     async function adminRestar() {
@@ -473,14 +537,14 @@
       const cant = parseInt(document.getElementById("admin-monedas").value);
       if (!alias || isNaN(cant)) return alert("Datos inválidos");
       await supabase.rpc('update_user_coins', { uname: alias, amount: -cant });
-      alert(`❌ $${cant} restadas a ${alias}`);
+      notificar(`❌ $${cant} restadas a ${alias}`);
     }
 
     async function adminEliminar() {
       const alias = document.getElementById("admin-alias").value;
       if (!alias) return alert("Alias requerido");
       await supabase.from('users').delete().eq('username', alias);
-      alert(`🗑️ Usuario ${alias} eliminado`);
+      notificar(`🗑️ Usuario ${alias} eliminado`);
     }
 
     function volverAlMenu() {
@@ -494,6 +558,7 @@
       if (!msg || !jugador) return;
       await supabase.from('messages').insert([{ username: jugador.username, content: msg }]);
       document.getElementById("msg").value = "";
+      play("soundChat");
     }
 
     supabase.channel('chat')
@@ -504,6 +569,10 @@
         div.textContent = `${payload.new.username}: ${payload.new.content}`;
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
+        if (payload.new.username !== jugador?.username) {
+          play("soundChat");
+          notificar(`${payload.new.username}: ${payload.new.content}`, 4000);
+        }
       })
       .subscribe();
 
