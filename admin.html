@@ -2,161 +2,188 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Admin - Vicentinos Challenge</title>
+  <title>Panel Admin — Vicentinos</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #161b22;
-      padding: 15px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-      color: #00ff00;
-      border-bottom: 2px solid #00ff00;
-    }
-    main {
-      padding: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: #161b22;
-    }
-    table, th, td {
-      border: 1px solid #30363d;
-    }
-    th, td {
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background: #21262d;
-    }
-    button {
-      background: #00ff00;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #39ff14;
-    }
-    .input-box {
-      width: 60px;
-      padding: 5px;
-      text-align: center;
-      border-radius: 5px;
-      border: 1px solid #555;
-      background: #0d1117;
-      color: #fff;
-    }
+    body { font-family: Inter, Arial, sans-serif; background:#0b1220; color:#e9f1ff; padding:24px; }
+    h1 { text-align:center; margin-bottom:8px; }
+    .hint { text-align:center; opacity:.7; margin-bottom:20px; }
+    .card { background:#0f172a; border:1px solid #24304a; border-radius:12px; padding:16px; margin:14px 0; }
+    button { cursor:pointer; border:none; border-radius:8px; padding:8px 12px; margin:0 4px; }
+    .ok { background:#16a34a; color:#fff; }
+    .warn { background:#d97706; color:#fff; }
+    .danger { background:#dc2626; color:#fff; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th,td { border-bottom:1px solid #22314e; padding:8px; text-align:left; }
+    #panel { display:none; }
+    #loginBox { text-align:center; margin-top:60px; }
+    #loginBox input { padding:10px; border-radius:8px; border:1px solid #24304a; background:#0b1220; color:#e9f1ff; width:240px; text-align:center; }
   </style>
 </head>
 <body>
-  <header>
-    ⚙️ Panel de Administración - Vicentinos Challenge
-  </header>
+  <h1>Panel de Administración</h1>
+  <p class="hint">Control de usuarios, monedas, chat y recaudación</p>
 
-  <main>
-    <h2>Usuarios y Monedas</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Alias</th>
-          <th>Monedas</th>
-          <th>Sumar/Restar</th>
-        </tr>
-      </thead>
-      <tbody id="users-table">
-        <tr><td colspan="3">Cargando usuarios...</td></tr>
-      </tbody>
-    </table>
-  </main>
+  <!-- LOGIN -->
+  <div id="loginBox">
+    <p>Ingrese código de acceso:</p>
+    <input type="password" id="adminPass" placeholder="Código">
+    <div style="margin-top:8px;">
+      <button class="ok" onclick="login()">Entrar</button>
+    </div>
+    <p id="loginError" style="color:#f87171;"></p>
+  </div>
 
-  <!-- Importamos Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script>
-    // ⚠️ CONFIGURA ESTO CON TUS DATOS DE SUPABASE
-    const SUPABASE_URL = "https://TU-PROJECT-URL.supabase.co";
-    const SUPABASE_KEY = "TU-API-KEY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <div id="panel">
+    <!-- Usuarios -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Usuarios</h2>
+        <div>
+          <button class="ok" onclick="cargarUsuarios()">Actualizar</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Alias</th><th>Monedas</th><th>Estado</th><th style="width:380px;">Acciones</th></tr></thead>
+        <tbody id="usuariosBody"></tbody>
+      </table>
+    </div>
 
-    const tableBody = document.getElementById("users-table");
+    <!-- Chat -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Chat reciente</h2>
+        <button class="ok" onclick="cargarChat()">Actualizar</button>
+      </div>
+      <table>
+        <thead><tr><th>Alias</th><th>Mensaje</th><th>Fecha</th><th>Acción</th></tr></thead>
+        <tbody id="chatBody"></tbody>
+      </table>
+    </div>
 
-    // Cargar usuarios desde Supabase
-    async function loadUsers() {
-      const { data, error } = await supabase.from("usuarios").select("*");
-      if (error) {
-        tableBody.innerHTML = `<tr><td colspan="3">Error cargando usuarios</td></tr>`;
-        console.error(error);
-        return;
-      }
+    <!-- Recaudación -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Recaudación</h2>
+        <button class="ok" onclick="cargarRecaudacion()">Ver total</button>
+      </div>
+      <p id="recaudacion" style="margin-top:8px; font-weight:700;"></p>
+    </div>
+  </div>
 
-      if (!data.length) {
-        tableBody.innerHTML = `<tr><td colspan="3">No hay usuarios aún</td></tr>`;
-        return;
-      }
+<script>
+const ADMIN_CODE = "20250819802006";
+function login(){
+  const pass = document.getElementById('adminPass').value.trim();
+  if (pass === ADMIN_CODE){
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('panel').style.display='block';
+    cargarUsuarios(); cargarChat(); cargarRecaudacion(); suscribirChat();
+  } else {
+    document.getElementById('loginError').innerText="Código incorrecto";
+  }
+}
 
-      tableBody.innerHTML = "";
-      data.forEach(user => {
-        const tr = document.createElement("tr");
+const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
+const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        tr.innerHTML = `
-          <td>${user.alias}</td>
-          <td id="coins-${user.id}">${user.monedas}</td>
-          <td>
-            <input type="number" id="amount-${user.id}" class="input-box" value="100">
-            <button onclick="updateCoins(${user.id}, true)">➕</button>
-            <button onclick="updateCoins(${user.id}, false)">➖</button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    }
+/* ====== USUARIOS ====== */
+async function cargarUsuarios(){
+  const { data, error } = await supabase.from('users').select('*').order('coins',{ascending:false});
+  if (error){ alert("Error cargando usuarios"); return; }
+  const tb = document.getElementById('usuariosBody'); tb.innerHTML="";
+  (data||[]).forEach(u=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.alias}</td>
+      <td>${u.coins}</td>
+      <td>${u.blocked ? 'Bloqueado' : 'Activo'}</td>
+      <td>
+        <button class="ok" onclick="sumarMonedas('${u.id}', 500)">+500</button>
+        <button class="ok" onclick="sumarMonedas('${u.id}', 2000)">+2000</button>
+        <button class="ok" onclick="sumarMonedas('${u.id}', 5000)">+5000</button>
+        <button class="warn" onclick="restarMonedas('${u.id}', 500)">-500</button>
+        <button class="warn" onclick="restarMonedas('${u.id}', 2000)">-2000</button>
+        <button class="danger" onclick="bloquearUsuario('${u.id}')">Bloquear</button>
+        <button class="danger" onclick="eliminarUsuario('${u.id}')">Eliminar</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+}
 
-    // Actualizar monedas
-    async function updateCoins(userId, add) {
-      const input = document.getElementById(`amount-${userId}`);
-      const amount = parseInt(input.value);
+// UPDATE calculado en el cliente + registro en transactions
+async function sumarMonedas(uid, cant){
+  const u = await supabase.from('users').select('coins').eq('id', uid).single();
+  if (u.error) { alert('No se pudo leer saldo'); return; }
+  const nuevo = (u.data.coins||0) + cant;
+  const up = await supabase.from('users').update({ coins: nuevo }).eq('id', uid);
+  if (!up.error){ await supabase.from('transactions').insert([{ user_id: uid, type:'carga', amount: cant }]); cargarUsuarios(); }
+  else alert('No se pudo actualizar');
+}
+async function restarMonedas(uid, cant){
+  const u = await supabase.from('users').select('coins').eq('id', uid).single();
+  if (u.error) { alert('No se pudo leer saldo'); return; }
+  const nuevo = Math.max(0, (u.data.coins||0) - cant);
+  const up = await supabase.from('users').update({ coins: nuevo }).eq('id', uid);
+  if (!up.error){ await supabase.from('transactions').insert([{ user_id: uid, type:'resta', amount: cant }]); cargarUsuarios(); }
+  else alert('No se pudo actualizar');
+}
+async function bloquearUsuario(uid){
+  await supabase.from('users').update({ blocked:true }).eq('id', uid);
+  cargarUsuarios();
+}
+async function eliminarUsuario(uid){
+  if (!confirm('¿Eliminar usuario y su chat?')) return;
+  await supabase.from('users').delete().eq('id', uid);
+  cargarUsuarios(); cargarChat();
+}
 
-      if (isNaN(amount) || amount <= 0) {
-        alert("Ingrese un número válido");
-        return;
-      }
+/* ====== CHAT ====== */
+async function cargarChat(){
+  // Si creaste la vista chat_reciente la usamos; si no, leemos messages directo
+  let { data, error } = await supabase.from('chat_reciente').select('*');
+  if (error) {
+    const alt = await supabase.from('messages').select('id, alias, message, created_at').order('created_at',{ascending:false}).limit(50);
+    data = alt.data || [];
+  }
+  const tb=document.getElementById('chatBody'); tb.innerHTML="";
+  (data||[]).forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${m.alias}</td>
+      <td>${m.message}</td>
+      <td>${new Date(m.created_at).toLocaleString()}</td>
+      <td><button class="danger" onclick="eliminarMensaje('${m.id}')">Borrar</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+async function eliminarMensaje(mid){
+  await supabase.from('messages').delete().eq('id', mid);
+  cargarChat();
+}
+function suscribirChat(){
+  supabase.channel('admin:chat')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>cargarChat())
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},()=>cargarChat())
+    .subscribe();
+}
 
-      // Obtener monedas actuales
-      const { data, error } = await supabase.from("usuarios").select("monedas").eq("id", userId).single();
-
-      if (error || !data) {
-        alert("Error obteniendo monedas del usuario");
-        return;
-      }
-
-      const newCoins = add ? data.monedas + amount : data.monedas - amount;
-
-      // Actualizar en la base
-      const { error: updateError } = await supabase.from("usuarios").update({ monedas: newCoins }).eq("id", userId);
-
-      if (updateError) {
-        alert("Error actualizando monedas");
-        console.error(updateError);
-      } else {
-        document.getElementById(`coins-${userId}`).innerText = newCoins;
-      }
-    }
-
-    // Cargar usuarios al entrar
-    loadUsers();
-  </script>
+/* ====== RECAUDACIÓN ====== */
+async function cargarRecaudacion(){
+  // Vista admin_recaudacion si existe:
+  const r = await supabase.from('admin_recaudacion').select('*').single();
+  if (!r.error){ document.getElementById('recaudacion').innerText = `Total recaudado: ${r.data.total_recaudado} monedas`; return; }
+  // fallback: sumar 'apuesta' y 'compra' - 'carga'
+  const t = await supabase.from('transactions').select('type, amount');
+  if (t.error) { document.getElementById('recaudacion').innerText="No disponible"; return; }
+  let total=0;
+  (t.data||[]).forEach(x=>{
+    if (x.type==='apuesta' || x.type==='compra') total += x.amount;
+    else if (x.type==='carga') total -= x.amount;
+  });
+  document.getElementById('recaudacion').innerText = `Total recaudado: ${total} monedas`;
+}
+</script>
 </body>
 </html>
