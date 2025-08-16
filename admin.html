@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin - Vicentinos Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #161b22;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      color: #00ff00;
+      border-bottom: 2px solid #00ff00;
+    }
+    main {
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #161b22;
+    }
+    table, th, td {
+      border: 1px solid #30363d;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #21262d;
+    }
+    button {
+      background: #00ff00;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #39ff14;
+    }
+    .input-box {
+      width: 60px;
+      padding: 5px;
+      text-align: center;
+      border-radius: 5px;
+      border: 1px solid #555;
+      background: #0d1117;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    ⚙️ Panel de Administración - Vicentinos Challenge
+  </header>
+
+  <main>
+    <h2>Usuarios y Monedas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Alias</th>
+          <th>Monedas</th>
+          <th>Sumar/Restar</th>
+        </tr>
+      </thead>
+      <tbody id="users-table">
+        <tr><td colspan="3">Cargando usuarios...</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- Importamos Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    // ⚠️ CONFIGURA ESTO CON TUS DATOS DE SUPABASE
+    const SUPABASE_URL = "https://TU-PROJECT-URL.supabase.co";
+    const SUPABASE_KEY = "TU-API-KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const tableBody = document.getElementById("users-table");
+
+    // Cargar usuarios desde Supabase
+    async function loadUsers() {
+      const { data, error } = await supabase.from("usuarios").select("*");
+      if (error) {
+        tableBody.innerHTML = `<tr><td colspan="3">Error cargando usuarios</td></tr>`;
+        console.error(error);
+        return;
+      }
+
+      if (!data.length) {
+        tableBody.innerHTML = `<tr><td colspan="3">No hay usuarios aún</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = "";
+      data.forEach(user => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${user.alias}</td>
+          <td id="coins-${user.id}">${user.monedas}</td>
+          <td>
+            <input type="number" id="amount-${user.id}" class="input-box" value="100">
+            <button onclick="updateCoins(${user.id}, true)">➕</button>
+            <button onclick="updateCoins(${user.id}, false)">➖</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // Actualizar monedas
+    async function updateCoins(userId, add) {
+      const input = document.getElementById(`amount-${userId}`);
+      const amount = parseInt(input.value);
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("Ingrese un número válido");
+        return;
+      }
+
+      // Obtener monedas actuales
+      const { data, error } = await supabase.from("usuarios").select("monedas").eq("id", userId).single();
+
+      if (error || !data) {
+        alert("Error obteniendo monedas del usuario");
+        return;
+      }
+
+      const newCoins = add ? data.monedas + amount : data.monedas - amount;
+
+      // Actualizar en la base
+      const { error: updateError } = await supabase.from("usuarios").update({ monedas: newCoins }).eq("id", userId);
+
+      if (updateError) {
+        alert("Error actualizando monedas");
+        console.error(updateError);
+      } else {
+        document.getElementById(`coins-${userId}`).innerText = newCoins;
+      }
+    }
+
+    // Cargar usuarios al entrar
+    loadUsers();
+  </script>
+</body>
+</html>
