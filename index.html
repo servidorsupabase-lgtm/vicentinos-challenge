@@ -2,474 +2,701 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vicentinos Challenge 🏉</title>
+
+<!-- Supabase -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- Fuentes e íconos -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   :root{
-    --bg:#042b4e; --card:#0b1220; --neon:#39ff14; --neon2:#97ff7a; --txt:#eaffef; --muted:#a7c7b7;
+    --bg:#031d3b;      --panel:#08162a;   --accent:#00ff7b;
+    --accent2:#00d1ff; --text:#e7ffe7;   --warn:#ff4d4d;
+    --gold:#ffdf00;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,Segoe UI,Roboto,Arial,sans-serif}
-  .banner{
-    height:180px;background:url('https://i.postimg.cc/nVvFmXQR/wp2896798.jpg') center/cover no-repeat;
-    border-bottom:4px solid var(--neon); position:relative;
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background: radial-gradient(1200px 600px at 50% -200px, #0b3b75 0%, var(--bg) 60%, #00132a 100%);
+    color:var(--text); font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; overflow-x:hidden;
   }
-  .banner:after{
-    content:"Vicentinos Challenge 🏉🔥"; position:absolute; inset:auto 0 16px 0; text-align:center;
-    font-weight:800; font-size:clamp(24px,5vw,40px); color:white; text-shadow:0 0 12px var(--neon), 0 0 24px var(--neon);
-  }
-  .wrap{max-width:1000px;margin:16px auto;padding:0 12px;display:grid;gap:16px}
-  .card{background:linear-gradient(180deg,#0b1220,#070c17);border:1px solid #1c2c3f;border-radius:14px;box-shadow:0 0 22px #0007;padding:16px}
-  .neon{box-shadow:0 0 12px var(--neon); border:1px solid var(--neon)}
-  h2{margin:0 0 10px 0;font-size:1.25rem;color:var(--neon2);text-shadow:0 0 8px var(--neon)}
-  .row{display:flex;gap:10px;align-items:center}
-  input,button{border-radius:10px;border:none;font:600 15px/1 'Inter';}
-  input{background:#0d1626;color:var(--txt);padding:12px 14px;border:1px solid #27435b;width:100%}
-  button{background:var(--neon);color:#001b06;padding:12px 16px;cursor:pointer;transition:transform .12s}
-  button:hover{transform:translateY(-1px)}
-  .sub{color:var(--muted);font-size:.95rem}
-  .grid{display:grid;gap:16px}
-  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
-  .panel{background:#0b1424;border:1px solid #1e3248;border-radius:12px;max-height:340px;overflow:auto;padding:10px}
-  .msg{padding:6px 8px;border-left:3px solid var(--neon);background:#0a1a2c;margin:6px 0;word-break:break-word}
-  .alias{font-weight:800;color:var(--neon2)}
-  .rank .r{padding:6px;border-bottom:1px dashed #224}
-  .center{text-align:center}
-  .small{font-size:.9rem;opacity:.9}
-  .hidden{display:none}
 
-  /* Juego */
-  .topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-  .stat{background:#0c1a2b;border:1px solid #20405a;border-radius:10px;padding:8px 10px;min-width:120px;text-align:center}
-  .label{color:#9cc; font-size:.85rem}
-  .val{font-weight:800;color:var(--neon)}
-  .timer{height:18px;background:#061324;border:1px solid #26435a;border-radius:999px;overflow:hidden;position:relative;margin:10px 0}
-  .bar{height:100%;width:100%;background:linear-gradient(90deg,var(--neon),#b0ffb9)}
-  .ball{position:absolute;top:-12px;left:0;width:36px;height:36px;background:url('https://cdn-icons-png.flaticon.com/512/300/300845.png') center/contain no-repeat;filter:drop-shadow(0 0 8px #0f0)}
-  .q{font-size:1.05rem;margin:8px 0 6px}
-  .opts{display:flex;gap:8px;flex-wrap:wrap}
-  .opts button{background:#07162a;color:#eaffef;border:1px solid #235; padding:10px 12px}
-  .opts button:hover{border-color:var(--neon)}
-  .ok{outline:2px solid #00ff90}
-  .bad{outline:2px solid #ff4b4b}
+  /* Banner */
+  .banner{width:100%; height:180px; position:relative; border-bottom:3px solid var(--accent)}
+  .banner::before{
+    content:""; position:absolute; inset:0;
+    background:url("https://i.postimg.cc/nVvFmXQR/wp2896798.jpg") center/cover no-repeat;
+    filter:brightness(.6);
+  }
+  .banner .title{
+    position:relative; z-index:2; height:100%;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-weight:800; letter-spacing:.5px; text-shadow:0 0 18px rgba(0,255,140,.5);
+    font-size:clamp(24px,4vw,38px);
+  }
+
+  /* Contenedores */
+  .wrap{width:min(100%,980px); padding:18px}
+  .card{
+    background:linear-gradient(180deg, rgba(5,22,40,.9), rgba(5,22,40,.75));
+    border:1px solid rgba(0,255,123,.28);
+    border-radius:14px; padding:16px; box-shadow:0 12px 30px rgba(0,0,0,.35);
+    backdrop-filter:blur(6px); margin:12px 0;
+  }
+  h2{font-weight:800; font-size:1.15rem; margin-bottom:10px; color:var(--accent)}
+  p.small{opacity:.9; font-size:.95rem}
+
+  /* Inputs / Buttons */
+  input,button{
+    border-radius:10px; border:none; outline:0; padding:12px 14px; font-size:1rem; font-weight:600;
+  }
+  input{
+    background:#0a1b31; color:var(--text); border:1px solid rgba(255,255,255,.12); width:100%;
+  }
+  .btn{
+    background:linear-gradient(90deg, var(--accent) 0%, #00ffa0 100%); color:#001a11;
+    cursor:pointer; transition:.2s; box-shadow:0 8px 16px rgba(0,255,140,.25); width:100%;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,255,140,.32)}
+  .btn.sec{background:#113257; color:#e9feff; border:1px solid rgba(0,209,255,.4)}
+  .btn.warn{background:var(--warn); color:#150202}
+  .btn.gold{background:linear-gradient(90deg,#ffd400,#ffdf00,#ffe766); color:#2a1d00}
+
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .row > *{flex:1}
 
   /* Toast */
-  .toast{position:fixed;top:14px;right:14px;background:#09121f;border:1px solid var(--neon);color:var(--txt);
-    padding:10px 14px;border-radius:10px;opacity:0;transform:translateY(-8px);transition:.25s;z-index:9999}
-  .toast.show{opacity:1;transform:none}
+  .toast{position:fixed; top:16px; right:16px; padding:12px 14px; border-radius:10px;
+    background:#0b1424; border:1px solid rgba(0,255,123,.35); color:var(--text);
+    box-shadow:0 10px 24px rgba(0,0,0,.35); transform:translateY(-16px); opacity:0;
+    transition:.25s; z-index:9999; font-weight:700
+  }
+  .toast.show{transform:none; opacity:1}
 
-  /* Confeti */
-  .confeti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9998}
-  .piece{position:absolute;width:10px;height:14px;background:var(--neon);animation:fall 1.2s linear forwards}
-  @keyframes fall{to{transform:translateY(110vh) rotate(1turn);opacity:.1}}
+  /* Juego */
+  .game-top{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+  .badge{background:#0b203e; border:1px solid rgba(0,255,123,.25); border-radius:10px; padding:8px 10px; text-align:center}
+  .badge strong{color:var(--gold)}
+  .timer{height:18px; background:#0a1b31; border:1px solid rgba(0,255,123,.3); border-radius:12px; overflow:hidden; position:relative}
+  .timebar{height:100%; width:100%; background:linear-gradient(90deg,#00ffa0,#00d1ff)}
+  .ball{position:absolute; top:-8px; left:0; width:30px; height:30px; background:url('https://cdn-icons-png.flaticon.com/512/2243/2243887.png') center/contain no-repeat; filter:drop-shadow(0 0 6px rgba(0,255,140,.7))}
+  .question{margin:12px 0; font-size:1.05rem}
+  .opts{display:grid; grid-template-columns:1fr; gap:10px}
+  .opt{background:#0b203e; color:#eaffff; border:1px solid rgba(0,255,123,.25); text-align:left}
+  .opt:hover{outline:2px solid rgba(0,255,123,.45)}
+  @media(min-width:740px){ .opts{grid-template-columns:1fr 1fr} }
 
-  /* Tienda */
-  .shop button{width:100%; margin-top:8px;background:var(--neon); color:#001b06}
+  /* Chat / Ranking */
+  .panel{max-height:340px; overflow:auto; border-radius:10px; border:1px dashed rgba(0,255,123,.25); padding:10px; background:#061327}
+  .msg{display:flex; gap:8px; padding:8px; margin:6px 0; background:rgba(0,255,123,.06); border-left:3px solid var(--accent); border-radius:6px}
+  .msg .who{font-weight:800; color:#8bffda}
+  .rank .item{padding:8px; border-bottom:1px dashed rgba(255,255,255,.12)}
+  .rank .item:first-child{background:rgba(255,223,0,.1); border-left:3px solid var(--gold)}
 
-  /* Volver */
-  .back{background:#18283b;color:#cde;border:1px solid #35566f}
+  /* Grid inferior */
+  .grid{display:grid; gap:12px}
+  @media(min-width:900px){ .grid{grid-template-columns:1.15fr .85fr} }
+
+  /* Admin */
+  .admin-top{display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .admin-panel{display:none; margin-top:10px}
+  .admin-panel.show{display:block}
+  .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px}
+  .kpi .badge{background:#101f39}
+
+  /* Animaciones feedback */
+  .confetti{pointer-events:none; position:fixed; inset:0; overflow:hidden; z-index:9998}
+  .confetti i{position:absolute; width:8px; height:14px; will-change:transform}
+  .shake{animation:shake .4s linear}
+  @keyframes shake{ 0%{transform:translateX(0)} 25%{transform:translateX(-6px)} 50%{transform:translateX(6px)} 75%{transform:translateX(-6px)} 100%{transform:translateX(0)} }
 </style>
 </head>
 <body>
-  <div class="banner"></div>
-  <div id="toast" class="toast"></div>
-  <div id="confeti" class="confeti"></div>
-
-  <!-- Sonidos -->
-  <audio id="snd-start" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opening-2034.mp3"></audio>
-  <audio id="snd-right" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
-  <audio id="snd-wrong" src="https://assets.mixkit.co/sfx/preview/mixkit-failure-arcade-alert-notification-240.wav"></audio>
-  <audio id="snd-chat" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
-  <audio id="snd-roar" src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_0c4588f1b2.mp3?filename=crowd-114106.mp3"></audio>
-
+  <div class="banner"><div class="title">Vicentinos Challenge 🏉🔥</div></div>
   <div class="wrap">
 
-    <!-- INICIO / LOBBY -->
-    <div id="lobby" class="card neon">
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
       <h2>🎮 Tu nombre de guerra</h2>
-      <p class="sub">Ingresá tu alias y preparate para el siete más picante. Los nuevos reciben <b>3 preguntas de entrenamiento</b>.</p>
+      <p class="small">Preparate para ir por los puntos. Si el alias existe retomás tu progreso.</p>
       <div class="row">
-        <input id="alias" maxlength="24" placeholder="Tu alias (ej: Pumita10)" />
-        <button id="btnPlay">¡JUGAR AHORA!</button>
+        <input id="alias" maxlength="22" placeholder="Ej: Pumita10" />
+        <button class="btn" id="btnLogin">¡JUGAR!</button>
       </div>
-    </div>
 
-    <div class="grid">
-      <div class="card">
-        <h2>🛒 Comprá Monedas</h2>
-        <p class="small">Serás redirigido a Mercado Pago. Luego <b>compartí el comprobante</b> en el chat y el admin acreditará las monedas a tu alias.</p>
-        <div class="shop">
-          <button data-url="https://mpago.la/16CyPeY" data-amount="2000">Pack $2.000 → 2.000 monedas</button>
-          <button data-url="https://mpago.la/1TTVVcV" data-amount="5000">Pack $5.000 → 5.000 monedas</button>
-          <button data-url="https://mpago.la/2HR6fjA" data-amount="10000">Pack $10.000 → 10.000 monedas</button>
+      <div class="admin-top" style="margin-top:10px;">
+        <button class="btn sec" id="btnAdminLogin">🔒 Admin Login</button>
+        <div style="flex:1; display:none" id="adminKeyBox">
+          <div class="row">
+            <input id="adminKey" placeholder="Clave especial" />
+            <button class="btn gold" id="btnAdminGo">Entrar</button>
+          </div>
+          <p class="small" style="opacity:.7">* Si la clave es correcta, verás el panel de admin dentro del juego.</p>
         </div>
-      </div>
-
-      <div class="card">
-        <h2>🏆 Ranking Top</h2>
-        <div id="ranking" class="panel rank"></div>
-      </div>
-
-      <div class="card">
-        <h2>💬 Chat del Estadio</h2>
-        <div class="row">
-          <input id="chatText" placeholder="Escribí y apretá Enviar…" />
-          <button id="btnSend">Enviar</button>
-        </div>
-        <div id="chat" class="panel"></div>
       </div>
     </div>
 
     <!-- JUEGO -->
-    <div id="game" class="card hidden">
-      <div class="topbar">
-        <div class="stat"><div class="label">Jugador</div><div class="val" id="uName">-</div></div>
-        <div class="stat"><div class="label">Nivel</div><div class="val" id="uLevel">1 / 15</div></div>
-        <div class="stat"><div class="label">Monedas</div><div class="val" id="uCoins">0</div></div>
-        <div class="stat"><div class="label">Preguntas</div><div class="val" id="uQCount">0/5</div></div>
+    <div class="card" id="gameCard" style="display:none;">
+      <h2>🎯 Trivia Rugby — <span id="levelTxt">Nivel 1</span></h2>
+
+      <div class="game-top">
+        <div class="badge">Jugador: <strong id="who"></strong></div>
+        <div class="badge">Monedas: <strong id="coins">0</strong></div>
+        <div class="badge">Progreso: <strong id="progress">0/5</strong></div>
       </div>
 
-      <div id="trainingBox" class="small" style="margin:8px 0 0 2px;color:#fffa96">
-        🎓 Modo entrenamiento activo. Te quedan <b id="trainLeft">3</b> preguntas gratis.
+      <!-- Timer -->
+      <div class="timer" style="margin:12px 0;">
+        <div class="timebar" id="timebar"></div>
+        <div class="ball" id="ball"></div>
       </div>
 
-      <div id="betBox" class="row" style="margin:10px 0">
-        <input id="bet" type="number" min="500" step="100" value="500" />
-        <button id="btnStartQ">Apostar y jugar</button>
-        <button id="btnBack" class="back">Volver al menú</button>
+      <!-- Apuesta -->
+      <div id="betStage" class="card" style="padding:12px; margin:10px 0;">
+        <h2>💸 Apuesta antes de ver la pregunta</h2>
+        <p class="small">Mínimo $500. Si acertás, ganás lo apostado. Si fallás o se acaba el tiempo, lo perdés.</p>
+        <div class="row" style="margin-top:6px;">
+          <input type="number" id="bet" min="500" step="100" value="500" />
+          <button class="btn" id="btnStartQ">Jugar pregunta</button>
+        </div>
       </div>
 
-      <div class="timer">
-        <div id="bar" class="bar"></div>
-        <div id="ball" class="ball"></div>
+      <!-- Pregunta -->
+      <div id="qStage" style="display:none;">
+        <div class="question" id="qText">...</div>
+        <div class="opts" id="qOpts"></div>
       </div>
 
-      <div id="qBox" class="hidden">
-        <div id="qText" class="q"></div>
-        <div id="opts" class="opts"></div>
+      <!-- Entrenamiento aviso -->
+      <div class="card" id="trainInfo" style="display:none; margin-top:10px;">
+        <h2>🎓 Entrenamiento completado</h2>
+        <p class="small">Para seguir jugando necesitás monedas. Comprá un pack abajo o pedile al admin que te acredite.</p>
       </div>
     </div>
+
+    <!-- GRID: Chat / Ranking / Tienda -->
+    <div class="grid">
+      <!-- Chat -->
+      <div class="card">
+        <div class="admin-top">
+          <h2>💬 Chat del Estadio</h2>
+          <div id="adminInlineTools" style="display:none;">
+            <button class="btn warn" id="btnClearChat" title="Borrar todos los mensajes">🧹 Borrar chat</button>
+          </div>
+        </div>
+        <div class="panel" id="chatBox"></div>
+        <div class="row" style="margin-top:8px;">
+          <input id="chatInput" placeholder="Escribí algo..." />
+          <button class="btn sec" id="btnSendMsg">Enviar</button>
+        </div>
+      </div>
+
+      <!-- Ranking + Tienda -->
+      <div class="card">
+        <h2>🏆 Ranking</h2>
+        <div class="panel rank" id="rankBox"></div>
+        <div class="card" style="margin-top:12px;">
+          <h2>🛒 Tienda de Monedas</h2>
+          <p class="small">Serás redirigido a Mercado Pago. Luego compartí el comprobante por chat y el admin acreditará a tu alias.</p>
+          <button class="btn gold" data-url="https://mpago.la/16CyPeY" data-amount="2000">Comprar $2.000 → 2.000 monedas</button>
+          <button class="btn gold" data-url="https://mpago.la/1TTVVcV" data-amount="5000" style="margin-top:8px;">Comprar $5.000 → 5.000 monedas</button>
+          <button class="btn gold" data-url="https://mpago.la/2HR6fjA" data-amount="10000" style="margin-top:8px;">Comprar $10.000 → 10.000 monedas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Admin (inline) -->
+    <div class="card admin-panel" id="adminPanel">
+      <div class="admin-top">
+        <h2>🛠️ Panel Admin</h2>
+        <div class="kpi" style="flex:1;">
+          <div class="badge">Usuarios: <strong id="kUsers">—</strong></div>
+          <div class="badge">Mensajes: <strong id="kMsgs">—</strong></div>
+          <div class="badge">Top Monedas: <strong id="kTop">—</strong></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <input id="admUser" placeholder="username del jugador" />
+        <input id="admAmount" type="number" step="100" value="1000" />
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn" id="btnAddCoins">Agregar monedas</button>
+        <button class="btn warn" id="btnDelUser">Eliminar usuario</button>
+      </div>
+      <p class="small" style="opacity:.75; margin-top:8px;">* Los cambios impactan en tiempo real (ranking/chat).</p>
+    </div>
+
   </div>
 
+  <!-- Toast + Confetti -->
+  <div id="toast" class="toast"></div>
+  <div id="confetti" class="confetti"></div>
+
+  <!-- Sonidos -->
+  <audio id="sStart" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opening-2034.mp3"></audio>
+  <audio id="sBet"   src="https://assets.mixkit.co/sfx/preview/mixkit-coin-drop-384.mp3"></audio>
+  <audio id="sGood"  src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+  <audio id="sBad"   src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-946.mp3"></audio>
+  <audio id="sChat"  src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
+  <audio id="sCrowd" src="https://cdn.pixabay.com/download/audio/2021/09/16/audio_2f1fb0e6b6.mp3?filename=applause-1-199996.mp3"></audio>
+
 <script>
-/* ===================  SUPABASE  =================== */
+/* ===========================
+   CONFIG SUPABASE
+=========================== */
 const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ===================  UTIL / UI  =================== */
-const $ = id => document.getElementById(id);
-const toast = (t)=>{const el=$("toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1800);};
-const play = id => {const a=$(id); if(!a) return; a.currentTime=0; a.play().catch(()=>{});};
-function confeti(){const box=$("confeti"); for(let i=0;i<80;i++){const d=document.createElement("div"); d.className="piece"; d.style.left=(Math.random()*100)+"%"; d.style.background=`hsl(${Math.random()*120+80}deg 100% 60%)`; d.style.animationDuration=(.8+Math.random()*1.2)+"s"; box.appendChild(d); setTimeout(()=>d.remove(),1400);}}
+/* ===========================
+   UTIL / UI
+=========================== */
+const $ = (id)=>document.getElementById(id);
+const toast=(t)=>{const el=$("toast"); el.textContent=t; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2100);};
+const play=(id)=>{const a=$(id); if(!a) return; a.currentTime=0; a.play().catch(()=>{});};
+const confetti=()=>{
+  const c=$("confetti"); c.innerHTML="";
+  for(let i=0;i<80;i++){
+    const e=document.createElement("i");
+    e.style.left=Math.random()*100+"vw";
+    e.style.top="-10px";
+    e.style.opacity="0.9";
+    e.style.background=`hsl(${Math.random()*360},100%,60%)`;
+    e.style.transform=`rotate(${Math.random()*360}deg)`;
+    e.animate([
+      { transform:`translateY(0) rotate(0deg)`, opacity:1 },
+      { transform:`translateY(${window.innerHeight+50}px) rotate(${360+Math.random()*360}deg)`, opacity:.9 }
+    ],{duration:1200+Math.random()*1200, easing:"ease-in"});
+    c.appendChild(e);
+    setTimeout(()=>e.remove(),2400);
+  }
+};
 
-/* ===================  ESTADO  =================== */
-let me=null;             // {id, username, coins}
-let level=1;             // 1..15
-let qInLevel=0;          // 0..5
-let trainingLeft=0;      // 3 al crear jugador
-let inTraining=false;    // true si trainingLeft>0
-let roundQ=null;         // pregunta actual
-let usedIds=new Set();   // ids usadas para no repetir
-let timer=null, timeLeft=20;
+/* ===========================
+   ESTADO
+=========================== */
+let me=null;            // {id, username, coins}
+let level=1;            // 1..15
+let asked=new Set();    // ids de preguntas ya usadas
+let round=[], answered=0;
+let isAdmin=false;
+let trainingLeft=3;     // 3 preguntas gratis
+let timer=null, tLeft=20;
 
-/* ===================  PREGUNTAS  ===================
-  d = dificultad de 1..15 (14-15 = casi imposible)
-*/
-const Q = [
-  /* --- Reglamento básico (1-5) --- */
-  {id:1,d:1,q:"¿Cuántos jugadores por equipo hay en rugby XV?",o:["13","15","11","14"],c:1},
-  {id:2,d:1,q:"¿Cuántos puntos vale un try?",o:["3","5","6","7"],c:1},
-  {id:3,d:1,q:"¿Cuánto dura un partido de rugby XV (tiempo total)?",o:["80 min","70 min","60 min","90 min"],c:0},
-  {id:4,d:2,q:"¿Qué se hace después de anotar un try?",o:["Reanudación con scrum","Conversión a palos","Line-out","Free kick"],c:1},
-  {id:5,d:2,q:"¿Cuántos puntos vale un drop goal?",o:["2","3","4","1"],c:1},
-  {id:6,d:2,q:"¿Cuántos puntos vale la conversión?",o:["3","2","1","4"],c:1},
-  {id:7,d:2,q:"¿Cuál es la dirección legal de pase?",o:["Adelante","Atrás/lateral","Cualquiera","Solo lateral"],c:1},
-  {id:8,d:2,q:"¿Cómo se llama la reanudación tras un pase hacia adelante accidental?",o:["Line-out","Scrum","Free kick","Drop"],c:1},
-  {id:9,d:3,q:"¿Qué es un ruck?",o:["Formación en el suelo tras un placaje","Alzada en line-out","Empuje de scrum","Salida rápida"],c:0},
-  {id:10,d:3,q:"¿Qué es un maul?",o:["Lucha por balón en el suelo","Formación de pie empujando","Tiro a palos","Saque rápido"],c:1},
-  {id:11,d:3,q:"¿Qué infracción suele sancionar un knock-on?",o:["Free kick","Scrum","Penal y tarjeta","Line-out"],c:1},
-  {id:12,d:3,q:"¿Dónde se realiza la conversión?",o:["En el centro","En línea con el lugar del try","Desde la esquina","Desde 22"],c:1},
-  {id:13,d:4,q:"¿Qué es fuera de juego (offside)?",o:["Estar delante del compañero que jugó el balón","Pisar la línea de touch","No retroceder 10m en penal","Salir antes del scrum"],c:0},
-  {id:14,d:4,q:"¿Cuántos jugadores forman el pack de forwards en XV?",o:["6","7","8","9"],c:2},
-  {id:15,d:4,q:"El primer jugador que llega a un ruck debe:",o:["Pisar el balón","Apoyar manos delante del balón","Ingresar por la puerta","Derribar rivales"],c:2},
-  {id:16,d:4,q:"¿Cuándo hay line-out?",o:["Balón a touch","Knock-on","Tackle alto","Obstrucción"],c:0},
-  {id:17,d:5,q:"¿Qué hace el medio scrum (9) en un scrum?",o:["Introduce el balón","Salta","Patea a palos","Levanta el balón del ruck"],c:0},
-  {id:18,d:5,q:"¿Qué posición suele patear las conversiones?",o:["Hooker","Apertura (10)","Wing","Pilar"],c:1},
-  {id:19,d:5,q:"¿Cuándo se concede penal?",o:["Offside/tackle alto/ingreso ilegal","Knock-on","Try","Pelota a touch"],c:0},
-  {id:20,d:5,q:"¿Qué distancia deben retroceder los defensores en un penal?",o:["5 m","8 m","10 m","15 m"],c:2},
+/* ===========================
+   PREGUNTAS (70)
+   Cada item: {id, q, opts:[...], c:indexCorrecto, hard:Boolean (niveles 14-15)}
+=========================== */
+const QUESTIONS = (()=> {
+  const arr = [
+    // Reglamentos / Básico
+    {q:"¿Cuántos jugadores por equipo en rugby XV?",o:["13","15","7"],c:1},
+    {q:"¿Cuántos puntos vale un try?",o:["3","5","7"],c:1},
+    {q:"¿Cuántos puntos vale un penal convertido?",o:["3","2","5"],c:0},
+    {q:"¿El pase debe ser…?",o:["Hacia atrás o lateral","Siempre hacia adelante","En globo hacia adelante"],c:0},
+    {q:"¿Duración reglamentaria de un partido (sin alargue)?",o:["70 min","80 min","90 min"],c:1},
+    {q:"¿Qué se marca por un tackle alto peligroso?",o:["Scrum","Penal y posible tarjeta","Line"],c:1},
+    {q:"¿Un drop vale…?",o:["3 puntos","2 puntos","4 puntos"],c:0},
+    {q:"¿Quién puede disputar el balón en un ruck?",o:["Solo backs","Cualquier jugador onside","Solo forwards"],c:1},
+    {q:"¿Qué formación reanuda tras pase adelantado accidental?",o:["Scrum","Line","Reinicio de mitad"],c:0},
+    {q:"¿Qué ocurre si la pelota sale por el lateral?",o:["Scrum","Line-out","Drop-out"],c:1},
 
-  /* --- Situaciones de partido (6-10) --- */
-  {id:21,d:6,q:"Si un defensor comete try-saver con tackle alto en in-goal rival:",o:["Try de penal","Solo penal","Scrum atacante","Nada"],c:0},
-  {id:22,d:6,q:"Pateás a touch desde un penal y la pelota sale: ¿quién lanza?",o:["Defensor","Atacante","Árbitro decide","Scrum"],c:1},
-  {id:23,d:6,q:"Tu compañero patea un up&under; corrés delante de él y participás:",o:["Legal","Offside penal","Solo scrum","Tarjeta automática"],c:1},
-  {id:24,d:6,q:"En 22 propia, atrapás y hacés mark (señal):",o:["Free kick","Scrum","Line-out","Penal"],c:0},
-  {id:25,d:7,q:"Scrum a 5 m, el 8 controla y es derrumbado ilegalmente cerca del try:",o:["Scrum repetido","Penal y amarilla posible","Solo free kick","Nada"],c:1},
-  {id:26,d:7,q:"En un ruck tocás el balón con las manos estando de pie y habilitado:",o:["Penal","Legal","Tarjeta","Scrum"],c:1},
-  {id:27,d:7,q:"Pateás a palos y la pelota pega en el palo y vuelve, un compañero la toma:",o:["Offside automático","Juego continúa","Line-out","Scrum"],c:1},
-  {id:28,d:8,q:"Conversión rápida: rivales a menos de 10 m interfieren visualmente:",o:["Repetir kick o penal","Nada","Scrum","Tarjeta solo"],c:0},
-  {id:29,d:8,q:"Pick&go: compañero cae y vos entrás por costado al ruck:",o:["Penal por ingreso lateral","Legal","Free kick","Scrum"],c:0},
-  {id:30,d:8,q:"Puntapíe de mitad y rival lo devuelve directo a touch sin botar desde fuera de 22:",o:["Line-out en mitad","Line-out donde salió","Line-out donde botó","Scrum"],c:1},
+    // Situaciones
+    {q:"Tras un knock-on, ¿qué se otorga?",o:["Scrum al rival","Penal","Line"],c:0},
+    {q:"¿Se puede patear directo al touch desde el campo propio dentro de 22?",o:["Sí","No","Solo si el árbitro autoriza"],c:0},
+    {q:"¿Qué es un maul?",o:["Formación sobre el suelo","Portador de pie más compañeros empujando","Reanudación con golpe"],c:1},
+    {q:"¿Qué jugador introduce la pelota en el scrum?",o:["Hooker","Medio scrum","Apertura"],c:1},
+    {q:"Si el pateador convierte el try, ¿cuántos puntos suma en total?",o:["5","7","8"],c:1},
+    {q:"¿Qué sanción por fuera de juego repetido?",o:["Scrum","Penal y posible tarjeta","Free kick"],c:1},
+    {q:"¿Qué es un mark?",o:["Pedir recepción limpia en 22 propia","Pedir tiempo","Señalar al pateador"],c:0},
+    {q:"¿Cuándo se pita fin del partido?",o:["Al llegar a 80 y con pelota muerta","Exactamente a los 80","Tras un penal"],c:0},
+    {q:"En line-out, ¿quién lanza?",o:["Hooker","Medio scrum","Wing"],c:0},
+    {q:"¿Se puede jugar rápido un line-out?",o:["Sí, con misma pelota y condiciones","No, nunca","Solo si rival no está formado"],c:0},
 
-  /* --- Historia / Mundial / Pumas (9-12) --- */
-  {id:31,d:9,q:"¿Quién ganó el Mundial de Rugby 2023?",o:["Nueva Zelanda","Sudáfrica","Inglaterra","Francia"],c:1},
-  {id:32,d:9,q:"¿En qué año Los Pumas fueron bronce mundial?",o:["2007","2011","1999","2003"],c:0},
-  {id:33,d:9,q:"Leyenda argentina apodada 'El Mago':",o:["Hugo Porta","Nicolás Sánchez","Felipe Contepomi","Agustín Pichot"],c:0},
-  {id:34,d:9,q:"¿En qué año Argentina ingresó al Rugby Championship?",o:["2010","2012","2014","2016"],c:1},
-  {id:35,d:10,q:"Sede del primer Mundial de Rugby (1987):",o:["Inglaterra","Nueva Zelanda y Australia","Sudáfrica","Francia"],c:1},
-  {id:36,d:10,q:"Máximo ganador histórico de Mundiales:",o:["Sudáfrica","Nueva Zelanda","Inglaterra","Australia"],c:0},
-  {id:37,d:10,q:"¿Qué selección es conocida como 'Los Teros'?",o:["Chile","Uruguay","Portugal","Georgia"],c:1},
-  {id:38,d:10,q:"¿Qué hizo famoso a Jonah Lomu?",o:["Hooker dominante","Wing poderoso y veloz","Apertura puntilloso","Fullback de kicks"],c:1},
-  {id:39,d:11,q:"Capitán de Los Pumas en 2007:",o:["Felipe Contepomi","Agustín Pichot","Juan Fernández Lobbe","Mario Ledesma"],c:1},
-  {id:40,d:11,q:"¿Cuántos equipos participan en un Mundial moderno?",o:["12","16","20","24"],c:2},
-  {id:41,d:11,q:"Apodo de Nueva Zelanda:",o:["Wallabies","All Blacks","Springboks","Les Bleus"],c:1},
-  {id:42,d:11,q:"Estadio mítico de Twickenham se ubica en:",o:["Cardiff","Dublín","Londres","París"],c:2},
-  {id:43,d:12,q:"Máximo goleador histórico de Los Pumas (puntos):",o:["Nicolás Sánchez","Hugo Porta","Felipe Contepomi","Juan M. Hernández"],c:0},
-  {id:44,d:12,q:"¿Qué país ganó el Mundial 1995 con Mandela presente?",o:["Australia","Sudáfrica","Inglaterra","Francia"],c:1},
-  {id:45,d:12,q:"¿Qué selección se apoda 'Brave Blossoms'?",o:["Samoa","Fiji","Japón","Tonga"],c:2},
-  {id:46,d:12,q:"¿Qué nación ganó la primera Rugby Championship (4 Nations) en 2012?",o:["NZ","Aus","RSA","Arg"],c:0},
+    // Historia / Jugadores
+    {q:"¿Qué selección ganó el Mundial 2023?",o:["Francia","Sudáfrica","Nueva Zelanda"],c:1},
+    {q:"¿País creador del rugby moderno?",o:["Inglaterra","Gales","Irlanda"],c:0},
+    {q:"¿Quién fue ‘El Mago’ argentino?",o:["Hugo Porta","Felipe Contepomi","Juan Martín Hernández"],c:2},
+    {q:"¿Apodo de Sudáfrica?",o:["Wallabies","Springboks","All Blacks"],c:1},
+    {q:"¿Primer Mundial de Rugby?",o:["1987","1991","1979"],c:0},
+    {q:"¿Qué selección hace el haka?",o:["Australia","Nueva Zelanda","Fiji"],c:1},
+    {q:"¿Capitán de Los Pumas en 2007?",o:["Agustín Pichot","Nicolás Sánchez","Juan Leguizamón"],c:0},
+    {q:"¿Mejor resultado de Pumas en un Mundial?",o:["3º puesto","Subcampeón","Campeón"],c:0},
+    {q:"¿Qué selección se conoce como ‘Le Bleus’?",o:["Francia","Italia","Escocia"],c:0},
+    {q:"¿Jonah Lomu era…?",o:["Pilar","Wing","Hooker"],c:1},
 
-  /* --- Posiciones / técnica (5-9) --- */
-  {id:47,d:5,q:"El hooker usa el pie para:",o:["Hookear en scrum","Marcar un try","Drop goal","Nada especial"],c:0},
-  {id:48,d:5,q:"El fullback (15) suele:",o:["Patear despejes y recibir patadas","Ser pilar del scrum","Introducir el balón","Lanzar line-out"],c:0},
-  {id:49,d:6,q:"En line-out, ¿quién lanza?",o:["Hooker","Pilar izquierdo","Medio scrum","Apertura"],c:0},
-  {id:50,d:6,q:"Jugador 7 (flanker abierto) destaca por:",o:["Velocidad y caza de rucks","Patear a palos","Salto de line-out únicamente","Ser más pesado del pack"],c:0},
-  {id:51,d:6,q:"El número 10 (apertura) decide:",o:["Juego al pie y distribución","Empuje en scrum","Saque de banda","Formación de ruck"],c:0},
-  {id:52,d:7,q:"¿Qué indica el árbitro con brazo extendido horizontal?",o:["Ley de ventaja","Penal","Scrum","Tarjeta"],c:0},
-  {id:53,d:7,q:"¿Qué pasa si el portador se zambulle de cabeza al ruck (sin apoyar)?",o:["Legal","Penal por zambullida","Scrum","Free kick"],c:1},
-  {id:54,d:7,q:"El bloqueo a un pateador sin contacto al balón es:",o:["Obstrucción (penal)","Legal","Scrum","Free kick"],c:0},
-  {id:55,d:8,q:"'Crocodile roll' en ruck (giro peligroso) se sanciona:",o:["Nada","Penal y posible tarjeta","Solo scrum","Free kick"],c:1},
-  {id:56,d:8,q:"Entrada en maul por el costado:",o:["Legal","Penal","Scrum","Tarjeta directa"],c:1},
+    // Reglas intermedias
+    {q:"¿Cuántos cambios tácticos se permiten en test rugby?",o:["8","6","10"],c:0},
+    {q:"En scrum, ¿quién talona?",o:["Hooker","Pilar izquierdo","Octavo"],c:0},
+    {q:"¿Qué es offside en juego abierto?",o:["Estar delante del pateador/último pie","Pisar la línea lateral","Hablar al árbitro"],c:0},
+    {q:"¿Se puede cargar al pateador?",o:["Sí, si fue legal y a tiempo","No, es tarjeta","Solo si árbitro avisa"],c:0},
+    {q:"En 7s, el tiempo por tiempo es…",o:["10 minutos","7 minutos","14 minutos"],c:2},
+    {q:"¿Qué tarjeta implica 10 minutos afuera?",o:["Amarilla","Roja","Azul"],c:0},
+    {q:"¿Un try penal vale…?",o:["5 + conversión obligatoria","7 puntos automáticos","6 con drop"],c:1},
+    {q:"Si hay ventaja por knock-on y no progresa…",o:["Se vuelve al scrum","Se sigue siempre","Se da line"],c:0},
+    {q:"¿Quién decide el fin de la ventaja?",o:["Capitán","Árbitro","Equipo con la pelota"],c:1},
+    {q:"¿Un pase que rebota en el árbitro?",o:["Se repite jugada","Scrum al equipo atacante","Pelota viva, según reglas actuales"],c:2},
 
-  /* --- Más situaciones (8-12) --- */
-  {id:57,d:8,q:"Pelota tocada por atacante, rebota en árbitro y queda para atacante:",o:["Scrum al equipo que atacaba","Se sigue","Scrum defensivo","Line-out"],c:0},
-  {id:58,d:8,q:"Tackle con contacto en cabeza bajo mit. mitigantes:",o:["Siempre roja","Puede ser amarilla","Nunca sanción","Libre"],c:1},
-  {id:59,d:9,q:"Reinicia equipo que recibió la conversión:",o:["Kick-off desde mitad","Drop desde 22","Scrum","Touch"],c:0},
-  {id:60,d:9,q:"Jugador en offside se vuelve onside si:",o:["Se queda quieto","Un compañero lo habilita o rival lo juega","Grita 'onside'","Retrocede 1 m"],c:1},
-  {id:61,d:9,q:"Pelota a touch sin botar desde fuera de 22 tras pase hacia atrás en 22:",o:["No gana metros","Gana metros","Scrum","Free kick"],c:0},
-  {id:62,d:10,q:"Placaje sin brazos (shoulder charge):",o:["Legal si fuerte","Penal y tarjeta posible","Solo scrum","Nada"],c:1},
-  {id:63,d:10,q:"En scrum, adelantarse antes de la introducción:",o:["Legal","Free kick","Penal","Tarjeta"],c:1},
-  {id:64,d:10,q:"¿Cuándo se marca 'goal line drop-out'?",o:["Atacante sostiene en in-goal rival sin apoyar","Defensor pisa en touch-in-goal","Drop de salida luego de try","Nunca"],c:0},
-  {id:65,d:11,q:"Si el pateador de penal pide palos, defensa debe:",o:["Quedarse a 5 m","Retroceder 10 m","No importa","Salir del campo"],c:1},
-  {id:66,d:11,q:"¿Qué ocurre si un defensor derrumba intencionalmente un maul a 5 m?",o:["Nada","Scrum","Penal y posible tarjeta","Free kick"],c:2},
-  {id:67,d:11,q:"Límites de sustituciones en test-match tradicionales:",o:["8","7","10","Ilimitadas"],c:0},
-  {id:68,d:12,q:"Tarjeta amarilla implica:",o:["5 min afuera","10 min afuera","15 min afuera","Expulsión definitiva"],c:1},
-  {id:69,d:12,q:"Tarjeta roja:",o:["Se reemplaza al toque","No se reemplaza (expulsión)","Vuelve a los 10","Solo en juveniles"],c:1},
-  {id:70,d:12,q:"¿Qué es 'advantage over'?",o:["Se agotó la ventaja","Ventaja comienza","Se anula ventaja","Marca el final del partido"],c:0},
+    // Situaciones de partido
+    {q:"¿Se puede disputar en el aire al receptor?",o:["Sí, si es limpio y no peligroso","Nunca","Solo dentro de 22"],c:0},
+    {q:"¿Qué pasa si el portador apoya en touch-in-goal?",o:["Try","22 drop-out o scrum 5","In goal: salida 22 si atacante tocó fuera"],c:2},
+    {q:"¿Qué pasa si un jugador patea desde afuera y vuelve al campo?",o:["Sigue juego","Line donde salió","Scrum"],c:1},
+    {q:"¿El TMO puede intervenir…?",o:["Solo a pedido del árbitro","Siempre que quiera","Nunca"],c:0},
+    {q:"¿Cuántos puntos vale la conversión?",o:["2","3","1"],c:0},
+    {q:"¿Se permite pase hacia adelante si es knock-back por viento?",o:["No","Sí","Depende del árbitro"],c:0},
+    {q:"En un ruck, ¿se puede usar las manos?",o:["No, salvo al inicio si no formado","Sí, siempre","Solo el 9"],c:0},
+    {q:"¿Quién forma última fila del scrum?",o:["Ala y octavo","Centros","Pilares"],c:0},
+    {q:"¿Se puede levantar al saltador en line-out?",o:["Sí, con seguridad","No","Solo si rival también"],c:0},
+    {q:"¿Qué pasa si hay doble movimiento en try?",o:["Try válido","Penal en contra","Scrum"],c:1},
 
-  /* --- Leyendas y datos (9-13) --- */
-  {id:71,d:9,q:"Capitán de Inglaterra campeón 2003:",o:["Martin Johnson","Jonny Wilkinson","Lawrence Dallaglio","Owen Farrell"],c:0},
-  {id:72,d:9,q:"Jugador autor del drop decisivo en 2003:",o:["Dan Carter","Jonny Wilkinson","Matt Giteau","Stephen Larkham"],c:1},
-  {id:73,d:10,q:"Apodo de Sudáfrica:",o:["Wallabies","Pumas","Springboks","Bokswana"],c:2},
-  {id:74,d:10,q:"Sede de 'La Catedral' del rugby argentino:",o:["GEBA","Belgrano","CASI","SIC"],c:2},
-  {id:75,d:10,q:"Los Pumas derrotaron por primera vez a Nueva Zelanda en:",o:["2020","2007","2015","2012"],c:0},
-  {id:76,d:11,q:"Máximo anotador por drops en Mundiales (histórico):",o:["Jonny Wilkinson","Dan Carter","Grant Fox","Jannie de Beer"],c:3},
-  {id:77,d:11,q:"¿Qué selección se conoce como 'Les Bleus'?",o:["Francia","Italia","Escocia","Gales"],c:0},
-  {id:78,d:11,q:"¿Qué país usa el cardo como emblema?",o:["Gales","Escocia","Irlanda","Italia"],c:1},
-  {id:79,d:12,q:"¿Qué selección integró el Five Nations original pero no el Home Nations?",o:["Italia","Francia","España","Rusia"],c:1},
-  {id:80,d:12,q:"¿Cuántos árbitros de campo hay en test-match?",o:["1 + 2 asistentes","2","3","1 solo"],c:0},
+    // Más historia/jugadores
+    {q:"¿Máximo anotador histórico de Pumas (test)?",o:["Nicolás Sánchez","Hugo Porta","Felipe Contepomi"],c:0},
+    {q:"¿Primer equipo en ganar 3 mundiales?",o:["Nueva Zelanda","Sudáfrica","Australia"],c:0},
+    {q:"¿Quién popularizó el ‘up and under’?",o:["Jonny Wilkinson","Garryowen FC","Dan Carter"],c:1},
+    {q:"¿Qué país ganó el 6 Naciones 2022 (Grand Slam)?",o:["Francia","Irlanda","Gales"],c:0},
+    {q:"¿En qué ciudad se originó la leyenda de William Webb Ellis?",o:["Rugby","Oxford","Cambridge"],c:0},
+    {q:"¿Qué selección es ‘La Rosa’?",o:["Inglaterra","Escocia","Gales"],c:0},
+    {q:"¿Quién es ‘Beauden’ famoso apertura?",o:["Barrett","Carter","O’Gara"],c:0},
+    {q:"¿Entrenador de Pumas 2023?",o:["Michael Cheika","Ledesma","Pocock"],c:0},
+    {q:"¿Qué significa ‘knock-on’?",o:["Golpe adelantado con mano/brazo","Pase largo","Tackle sin brazos"],c:0},
+    {q:"¿Cuántos árbitros asisten al principal en test?",o:["2 jueces de touch + TMO","Solo TMO","Ninguno"],c:0},
 
-  /* --- Casi imposible (14-15) --- */
-  {id:81,d:14,q:"¿Qué equipo ganó el Tri-Nations 1996 (primera edición)?",o:["Australia","Sudáfrica","Nueva Zelanda","Empate"],c:2},
-  {id:82,d:14,q:"Ley 50:22 permite ganar line-out si:",o:["Pateás desde tu campo y la pelota bota y sale dentro 22 rival","Pateás directo a touch desde cualquier lado","Solo si es penal","Nunca"],c:0},
-  {id:83,d:14,q:"¿Qué año se introdujo el bonus ofensivo en Rugby Championship?",o:["2016","2017","2018","2019"],c:1},
-  {id:84,d:14,q:"Hooker récord de tries con Inglaterra:",o:["Dylan Hartley","Jamie George","Keith Wood","Tom Youngs"],c:1},
-  {id:85,d:14,q:"'Caterpillar ruck' se utiliza para:",o:["Formar maul más largo","Proteger salida de box-kick del 9","Evitar offside de backs","Simular scrum"],c:1},
-  {id:86,d:15,q:"¿Qué equipo logró Grand Slam en Five/Six Nations más veces (hasta 2024)?",o:["Inglaterra","Gales","Francia","Irlanda"],c:0},
-  {id:87,d:15,q:"Límite de altura de line-out lift legal:",o:["Sin límite explícito, prima seguridad","2 metros","2,5 metros","3 metros"],c:0},
-  {id:88,d:15,q:"Distancia mínima de 10 m en reinicio corto: rival salta y la toma a 9 m sin interferencia:",o:["Juego sigue (legal)","Free kick al no llegar a 10","Scrum","Penal"],c:0},
-  {id:89,d:15,q:"Si el pateador anuncia palos y luego patea a touch intencionalmente:",o:["Penal contra por conducta antideportiva","Legal","Scrum","Repetir penal"],c:0},
-  {id:90,d:15,q:"En goal-line drop-out: atacante en offside dentro de 5 m participa antes de habilitación:",o:["Penal a defensa","Penal al ataque","Scrum","Nada"],c:1},
+    // Intermedio alto
+    {q:"¿Qué define onside tras un kick?",o:["Estar detrás del pateador","Estar en campo propio","Estar dentro de 22"],c:0},
+    {q:"¿Free kick se puede patear directo a palos?",o:["No","Sí","Solo en sevens"],c:0},
+    {q:"¿Scrum 5 defensivo surge por…?",o:["Knock-on atacante en in-goal","Penal en 5","Line perdido"],c:0},
+    {q:"¿Pelota apoyada simultánea por atacante y defensor?",o:["Try","Scrum 5 atacante","Bola muerta: scrum 5"],c:2},
+    {q:"¿Puede el 9 disputar en ruck si está onside?",o:["Sí","No","Solo si el 8 lo permite"],c:0},
+    {q:"¿Qué pasa si un tackleador no libera al jugador?",o:["Penal","Scrum","Nada"],c:0},
+    {q:"¿Obstrucción (blocking) se sanciona con…?",o:["Scrum","Penal","Free kick"],c:1},
+    {q:"¿En line desordenado (número desigual) sin ventaja…?",o:["Repetir line","Free kick","Scrum"],c:1},
+    {q:"¿Patear la pelota en ruck una vez formada…?",o:["Permitido","Penal","Tarjeta"],c:1},
+    {q:"¿Se puede pedir scrum en lugar de penal?",o:["Sí","No","Solo dentro de 22"],c:0},
 
-  /* Más para llegar a 100 */
-  {id:91,d:9,q:"¿Quién es el capitán histórico de los All Blacks con más tests (hasta 2024)?",o:["Richie McCaw","Sean Fitzpatrick","Kieran Read","Dane Coles"],c:0},
-  {id:92,d:10,q:"¿Cuál es el apodo de Australia?",o:["Wallabies","Kangaroos","Kiwis","Bulls"],c:0},
-  {id:93,d:11,q:"¿Qué país es 'Los Cóndores'?",o:["Chile","Uruguay","España","Rumania"],c:0},
-  {id:94,d:12,q:"La ventaja se puede jugar por:",o:["Avance territorial/posicional o táctica clara","Solo 10 m","Solo 5 fases","Solo hasta mitad"],c:0},
-  {id:95,d:13,q:"Número máximo de jugadores en touch para line-out:",o:["Ilimitado si simétricos","5","7","4"],c:0},
-  {id:96,d:13,q:"¿Qué sanción por bloquear con correr líneas al receptor de alto (no mirando balón)?",o:["Obstrucción (penal)","Legal","Scrum","Free kick"],c:0},
-  {id:97,d:13,q:"Si en 22 propia pateás directo a touch y venía de pase hacia atrás dentro de 22:",o:["Gana metros","No gana metros","Scrum","Free kick"],c:0},
-  {id:98,d:14,q:"¿Qué juez controla TMO?",o:["Oficial de video independiente","Juez de touch","Cuarto árbitro","Capitán local"],c:0},
-  {id:99,d:14,q:"Drop-kick en salida desde mitad debe:",o:["Ser drop obligatoriamente","Puede ser puntapié place","Cualquier pase","Scrum"],c:0},
-  {id:100,d:15,q:"¿Cuándo puede un jugador en offside ser puesto onside por rival?",o:["Cuando rival corre 5 m o patea o la toca/porta intencionalmente","Nunca","Solo con penal","Solo con scrum"],c:0},
-];
+    // Dificultad 14-15 (hard=true)
+    {q:"Hard: ¿Límite de jugadores en line?",o:["Hasta 13","Hasta 8","Sin límite (pero ordenados)"],c:2,h:1},
+    {q:"Hard: ¿Offside tras kick y ‘10 metros’?",o:["Debe retirarse o ser habilitado","No aplica en test","Solo para forwards"],c:0,h:1},
+    {q:"Hard: ¿Reinicio tras marca en 22 propia?",o:["Free kick desde el lugar","Scrum en 5","Gol a palos directo"],c:0,h:1},
+    {q:"Hard: ¿Qué determina ‘último pie’ en ruck?",o:["Pies del último participante legal","Línea imaginaria del referee","La posición del 9"],c:0,h:1},
+    {q:"Hard: ¿Conversión fuera de tiempo reglamentario?",o:["Se puede patear si try fue antes de 80","Nunca","Solo si ambos capitanes aceptan"],c:0,h:1},
+    {q:"Hard: ¿Kick directo al touch desde fuera de 22?",o:["Line a donde salió","Line donde pateó","Scrum rival"],c:0,h:1},
+    {q:"Hard: ¿Reanudación si el atacante comete knock-on en in-goal rival?",o:["Scrum 5 para defensor","Drop 22","Scrum 5 para atacante"],c:0,h:1},
+    {q:"Hard: ¿Se puede tomar un quick-tap con el balón en movimiento?",o:["Debe estar quieta","Sí","Solo con permiso del árbitro"],c:0,h:1},
+    {q:"Hard: ¿Penal repetido cerca del in-goal?",o:["Tarjeta amarilla posible","Solo charla","Scrum obligatorio"],c:0,h:1},
+    {q:"Hard: ¿Cargar al pateador tarde pero sin contacto a la cabeza?",o:["Penal y posible amarilla","Nada","Solo free-kick"],c:0,h:1}
+  ];
+  // asignar ids
+  return arr.map((x,i)=>({id:i+1, q:x.q, opts:x.o, c:x.c, h:!!x.h}));
+})();
 
-/* ===================  LÓGICA  =================== */
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function poolForLevel(L){
-  if(L<=3) return Q.filter(x=>x.d<=3);
-  if(L<=6) return Q.filter(x=>x.d<=6);
-  if(L<=9) return Q.filter(x=>x.d<=9);
-  if(L<=12) return Q.filter(x=>x.d<=12);
-  if(L===13) return Q.filter(x=>x.d>=10);
-  if(L===14) return Q.filter(x=>x.d>=14);
-  return Q.filter(x=>x.d>=15); // nivel 15
+/* ===========================
+   HELPERS
+=========================== */
+const rnd = (arr)=>arr[Math.floor(Math.random()*arr.length)];
+const shuffle = (arr)=>arr.sort(()=>Math.random()-0.5);
+
+/* ===========================
+   LOGIN + ADMIN
+=========================== */
+$("btnAdminLogin").onclick = ()=>{ $("adminKeyBox").style.display="block"; };
+$("btnAdminGo").onclick = ()=>{
+  if($("adminKey").value.trim()==="20250819802006"){
+    isAdmin=true;
+    $("adminPanel").classList.add("show");
+    $("adminInlineTools").style.display="block";
+    toast("Admin habilitado");
+  }else{
+    toast("Clave incorrecta");
+  }
+};
+
+$("btnLogin").onclick = async ()=>{
+  const username = $("alias").value.trim();
+  if(!username){ toast("Ingresá un alias"); return; }
+
+  // buscar/crear
+  let { data:user, error } = await supabase.from("users").select("*").eq("username",username).maybeSingle();
+  if(error){ toast("Error de conexión"); return; }
+  if(!user){
+    const ins = await supabase.from("users").insert([{ username, coins:0 }]).select().single();
+    if(ins.error){ toast("No se pudo crear el usuario"); return; }
+    user = ins.data;
+  }
+  me = user;
+  $("who").textContent = me.username;
+  $("coins").textContent = me.coins || 0;
+  $("loginCard").style.display="none";
+  $("gameCard").style.display="block";
+  play("sStart");
+  loadRanking();
+  startTrainingOrRound();
+  subscribeChat();
+  loadChat();
+  refreshKPIs(); // admin
+};
+
+/* ===========================
+   ENTRENAMIENTO + RONDAS
+=========================== */
+function startTrainingOrRound(){
+  if(trainingLeft>0){
+    toast(`Entrenamiento: te quedan ${trainingLeft} pregunta(s) gratis`);
+  }
+  newRound();
+}
+function newRound(){
+  // elegir 5 preguntas sin repetir globalmente
+  const pool = QUESTIONS.filter(q=>!asked.has(q.id) && ((level<14) || q.h===true)); // en 14-15 prioriza hard
+  // si en 14-15 no hay suficientes hard, completa con cualquiera restante
+  let candidates = [...pool];
+  if(level<14){
+    // normal
+  }else{
+    const hard = QUESTIONS.filter(q=>q.h && !asked.has(q.id));
+    const rest = QUESTIONS.filter(q=>!q.h && !asked.has(q.id));
+    candidates = [...hard, ...rest];
+  }
+  shuffle(candidates);
+  round = candidates.slice(0,5);
+  answered = 0;
+  updateTop();
+  showBet();
+}
+function updateTop(){
+  $("levelTxt").textContent = `Nivel ${level}`;
+  $("coins").textContent = me?.coins ?? 0;
+  $("progress").textContent = `${answered}/5`;
 }
 
-function nextQuestion(){
-  const pool = shuffle(poolForLevel(level).filter(q=>!usedIds.has(q.id)));
-  if(pool.length===0){ usedIds.clear(); return nextQuestion(); }
-  roundQ = pool[0]; usedIds.add(roundQ.id);
-  $("qText").textContent = roundQ.q;
-  const ops = $("opts"); ops.innerHTML="";
-  roundQ.o.forEach((txt,idx)=>{
+/* ===========================
+   APUESTAS + PREGUNTAS + TIMER
+=========================== */
+$("btnStartQ").onclick = ()=>{
+  const bet = parseInt($("bet").value,10);
+  if(isNaN(bet) || bet<500){ toast("Apuesta mínima $500"); return; }
+  if(trainingLeft<=0 && (me.coins||0) < bet){ toast("No tenés monedas suficientes"); return; }
+
+  play("sBet");
+  // Mostrar pregunta
+  const q = round[answered];
+  $("qText").textContent = q.q;
+  const box=$("qOpts"); box.innerHTML="";
+  q.opts.forEach((t,idx)=>{
     const b=document.createElement("button");
-    b.textContent=txt;
-    b.onclick=()=>answer(idx);
-    ops.appendChild(b);
+    b.className="btn opt";
+    b.textContent=t;
+    b.onclick = ()=>checkAnswer(idx, q.c, bet, q.id);
+    box.appendChild(b);
   });
-  $("qBox").classList.remove("hidden");
-  startTimer();
-}
+  $("betStage").style.display="none";
+  $("qStage").style.display="block";
 
-function startTimer(){
-  clearInterval(timer); timeLeft=20;
-  $("bar").style.width="100%"; $("ball").style.left="0%";
+  // Timer 20s
+  startTimer(bet, q.c, q.id);
+};
+
+function startTimer(bet, correctIndex, qid){
+  clearInterval(timer);
+  tLeft=20;
+  const bar=$("timebar"), ball=$("ball");
+  bar.style.width="100%"; ball.style.left="0";
   timer = setInterval(()=>{
-    timeLeft--;
-    const p = Math.max(0, timeLeft/20*100);
-    $("bar").style.width = p+"%";
-    $("ball").style.left = (100-p)+"%";
-    if(timeLeft<=0){ clearInterval(timer); resolve(false,true); }
+    tLeft--;
+    const p = Math.max(0,(tLeft/20)*100);
+    bar.style.width = p+"%";
+    ball.style.left = (100-p)+"%";
+    if(tLeft<=0){
+      clearInterval(timer);
+      // tiempo agotado = incorrecto
+      fail(bet);
+      finalizeQuestion(qid);
+    }
   },1000);
 }
 
-async function answer(idx){ clearInterval(timer); resolve(idx===roundQ.c,false); }
+async function checkAnswer(sel, correct, bet, qid){
+  clearInterval(timer);
+  if(trainingLeft>0){
+    // entrenamiento: solo feedback visual
+    if(sel===correct){ play("sGood"); confetti(); toast("✅ ¡Correcto! (entrenamiento)"); }
+    else{ play("sBad"); $("gameCard").classList.add("shake"); setTimeout(()=>$("gameCard").classList.remove("shake"),400); toast("❌ Incorrecto (entrenamiento)"); }
+    finalizeQuestion(qid, true);
+    return;
+  }
 
-async function resolve(correct,timeout){
-  const trainingNow = inTraining && trainingLeft>0;
-  const bet = parseInt($("bet").value,10) || 0;
-
-  if(trainingNow){
-    trainingLeft--; $("trainLeft").textContent=trainingLeft;
-    if(trainingLeft<=0){ inTraining=false; $("trainingBox").classList.add("hidden"); toast("Fin del entrenamiento. ¡Comprá monedas para seguir!"); }
-    if(correct){ play("snd-right"); confeti(); play("snd-roar"); toast("✅ ¡Correcto! (entrenamiento)"); }
-    else{ play("snd-wrong"); toast(timeout?"⏳ Tiempo agotado":"❌ Incorrecto"); }
+  if(sel===correct){
+    // gana
+    play("sGood"); confetti();
+    const newCoins = (me.coins||0) + bet;
+    await supabase.from("users").update({ coins:newCoins }).eq("id", me.id);
+    me.coins=newCoins; updateTop();
+    toast(`✅ ¡Correcto! +$${bet}`);
+    play("sCrowd");
   }else{
-    if(correct){
-      me.coins += bet;
-      toast(`✅ ¡Correcto! +${bet}`);
-      play("snd-right"); confeti(); play("snd-roar");
-    }else{
-      me.coins = Math.max(0, me.coins - bet);
-      toast(timeout?`⏳ Tiempo agotado. -${bet}`:`❌ Incorrecto. -${bet}`);
-      play("snd-wrong");
+    fail(bet);
+  }
+  finalizeQuestion(qid);
+}
+
+async function fail(bet){
+  play("sBad"); $("gameCard").classList.add("shake"); setTimeout(()=>$("gameCard").classList.remove("shake"),400);
+  if(trainingLeft<=0){
+    const newCoins = Math.max(0,(me.coins||0) - bet);
+    await supabase.from("users").update({ coins:newCoins }).eq("id", me.id);
+    me.coins=newCoins; updateTop();
+    toast(`❌ Incorrecto / tiempo. -$${bet}`);
+  }else{
+    toast("⏰ Se acabó el tiempo (entrenamiento)");
+  }
+}
+
+function finalizeQuestion(qid, wasTraining=false){
+  asked.add(qid);
+  answered++;
+  updateTop();
+
+  if(trainingLeft>0){
+    trainingLeft--;
+    if(trainingLeft===0){
+      $("trainInfo").style.display="block";
+      toast("🎓 ¡Entrenamiento completo! Comprá monedas para seguir.");
     }
-    await supabase.from("users").update({coins:me.coins}).eq("id",me.id);
   }
 
-  qInLevel++; updateTop();
-  if(qInLevel>=5){
+  if(answered>=5){
+    // subir nivel
     level = Math.min(15, level+1);
-    qInLevel = 0; toast(`⬆️ ¡Subiste a Nivel ${level}!`);
+    toast(`⬆️ Nivel ${level}`);
+    newRound();
+  }else{
+    showBet();
   }
-  nextQuestion();
 }
 
-function updateTop(){
-  $("uName").textContent = me.username;
-  $("uCoins").textContent = me.coins;
-  $("uLevel").textContent = `${level} / 15`;
-  $("uQCount").textContent = `${qInLevel}/5`;
+function showBet(){
+  clearInterval(timer);
+  $("qStage").style.display="none";
+  $("betStage").style.display="block";
+  // reset timer visuals
+  $("timebar").style.width="100%"; $("ball").style.left="0";
 }
 
-/* ===================  LOGIN / LOBBY  =================== */
-$("btnPlay").onclick = async ()=>{
-  const alias = $("alias").value.trim();
-  if(!alias){ toast("Ingresá un alias"); return; }
-  // buscar / crear
-  let { data: u, error } = await supabase.from("users").select("*").eq("username", alias).maybeSingle();
-  if(error){ toast("Error buscando usuario"); return; }
-  let created=false;
-  if(!u){
-    const ins = await supabase.from("users").insert([{ username: alias, coins: 0 }]).select().single();
-    if(ins.error){ toast("No se pudo crear el usuario"); return; }
-    u = ins.data; created=true;
-  }
-  me = u;
-  // entrenamiento local por jugador
-  const key=`train:${alias}`;
-  if(created && localStorage.getItem(key)==null){ localStorage.setItem(key,"3"); }
-  trainingLeft = parseInt(localStorage.getItem(key)||"0",10);
-  inTraining = trainingLeft>0;
-  $("trainLeft").textContent=trainingLeft;
-  $("trainingBox").classList.toggle("hidden", !inTraining);
-
-  $("lobby").classList.add("hidden");
-  $("game").classList.remove("hidden");
-  play("snd-start");
-
-  level=1; qInLevel=0; usedIds.clear(); updateTop();
-  if(!inTraining && me.coins<500) toast("Necesitás monedas para apostar (mínimo 500). Mirá la tienda.");
-  nextQuestion();
-
-  cargarRanking(); cargarChat(); suscribirChat();
-  setInterval(cargarRanking, 8000);
+/* ===========================
+   CHAT
+=========================== */
+async function loadChat(){
+  const { data } = await supabase.from("messages").select("*").order("created_at",{ascending:true}).limit(80);
+  paintChat(data||[]);
+}
+function paintChat(list){
+  const box=$("chatBox"); box.innerHTML="";
+  list.forEach(m=>{
+    const d=document.createElement("div");
+    d.className="msg";
+    d.innerHTML=`<span class="who">${m.username}:</span> <span>${m.content}</span>`;
+    box.appendChild(d);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+$("btnSendMsg").onclick = async ()=>{
+  if(!me){ toast("Primero logueate"); return; }
+  const txt = $("chatInput").value.trim();
+  if(!txt) return;
+  $("chatInput").value="";
+  play("sChat");
+  await supabase.from("messages").insert([{ username: me.username, content: txt }]);
 };
+function subscribeChat(){
+  supabase.channel('realtime:messages')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, (p)=>{
+      // agregar a la vista
+      const m=p.new;
+      const box=$("chatBox");
+      const d=document.createElement("div");
+      d.className="msg";
+      d.innerHTML=`<span class="who">${m.username}:</span> <span>${m.content}</span>`;
+      box.appendChild(d);
+      box.scrollTop=box.scrollHeight;
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'}, ()=>{
+      loadChat();
+    })
+    .subscribe();
+}
 
-$("btnBack").onclick = ()=>{
-  $("game").classList.add("hidden");
-  $("lobby").classList.remove("hidden");
-};
+/* ===========================
+   RANKING
+=========================== */
+async function loadRanking(){
+  const { data } = await supabase.from("users").select("username,coins").order("coins",{ascending:false}).limit(30);
+  const box=$("rankBox"); box.innerHTML="";
+  (data||[]).forEach((r,i)=>{
+    const d=document.createElement("div"); d.className="item";
+    d.innerHTML = `#${i+1} <strong>${r.username}</strong> — $${r.coins||0}`;
+    box.appendChild(d);
+  });
+}
+setInterval(()=>{ if(me) loadRanking(); }, 10000);
 
-/* ===================  TIENDA  =================== */
-document.querySelectorAll(".shop button").forEach(b=>{
-  b.addEventListener("click", ()=>{
-    const url=b.getAttribute("data-url"); const amount=b.getAttribute("data-amount");
-    toast(`Serás redirigido a Mercado Pago por ${amount} monedas. Compartí el comprobante en el chat.`);
+/* ===========================
+   TIENDA
+=========================== */
+document.querySelectorAll('[data-url]').forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const url = btn.getAttribute("data-url");
+    const amount = btn.getAttribute("data-amount");
+    toast(`Vas a Mercado Pago por ${amount} monedas. Compartí el comprobante por chat y el admin te acredita.`);
     window.open(url,"_blank");
   });
 });
 
-/* ===================  CHAT  =================== */
-$("btnSend").onclick = async ()=>{
-  if(!me) return;
-  const txt=$("chatText").value.trim();
-  if(!txt) return;
-  $("chatText").value="";
-  play("snd-chat");
-  await supabase.from("messages").insert([{ username: me.username, content: txt }]);
+/* ===========================
+   ADMIN PANEL (inline)
+=========================== */
+$("btnClearChat").onclick = async ()=>{
+  if(!isAdmin){ toast("Solo admin"); return; }
+  await supabase.from("messages").delete().neq("id",-1);
+  toast("🧹 Chat borrado");
 };
-async function cargarChat(){
-  const { data } = await supabase.from("messages").select("*").order("created_at",{ascending:false}).limit(80);
-  pintarChat((data||[]).reverse());
+$("btnAddCoins").onclick = async ()=>{
+  if(!isAdmin){ toast("Solo admin"); return; }
+  const u = $("admUser").value.trim();
+  const amt = parseInt($("admAmount").value,10) || 0;
+  if(!u || !amt){ toast("Completá usuario y monto"); return; }
+  // buscar usuario
+  const { data:user } = await supabase.from("users").select("*").eq("username",u).maybeSingle();
+  if(!user){ toast("Usuario no existe"); return; }
+  const newCoins = (user.coins||0) + amt;
+  const { error } = await supabase.from("users").update({ coins:newCoins }).eq("id", user.id);
+  if(error){ toast("Error al acreditar"); return; }
+  if(me && me.id===user.id){ me.coins=newCoins; updateTop(); }
+  toast(`✅ Acreditadas $${amt} a ${u}`);
+  loadRanking(); refreshKPIs();
+};
+$("btnDelUser").onclick = async ()=>{
+  if(!isAdmin){ toast("Solo admin"); return; }
+  const u=$("admUser").value.trim();
+  if(!u){ toast("Indicá username"); return; }
+  const { data:user } = await supabase.from("users").select("id").eq("username",u).maybeSingle();
+  if(!user){ toast("Usuario no existe"); return; }
+  await supabase.from("users").delete().eq("id",user.id);
+  toast(`🗑️ ${u} eliminado`);
+  if(me && me.username===u){ location.reload(); }
+  loadRanking(); refreshKPIs();
+};
+async function refreshKPIs(){
+  if(!isAdmin) return;
+  const u = await supabase.from("users").select("id,coins").order("coins",{ascending:false}).limit(1);
+  const m = await supabase.from("messages").select("id",{count:"exact", head:true});
+  const c = await supabase.from("users").select("id",{count:"exact", head:true});
+  $("kUsers").textContent = c.count ?? "—";
+  $("kMsgs").textContent = m.count ?? "—";
+  $("kTop").textContent = (u.data && u.data[0]) ? (u.data[0].coins||0) : "—";
 }
-function pintarChat(rows){
-  const c=$("chat"); c.innerHTML="";
-  rows.forEach(r=>{
-    const d=document.createElement("div"); d.className="msg";
-    d.innerHTML=`<span class="alias">${r.username}:</span> <span>${r.content}</span>`;
-    c.appendChild(d);
-  });
-  c.scrollTop=c.scrollHeight;
-}
-function suscribirChat(){
-  supabase.channel('realtime:messages')
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, payload=>{
-      const r = payload.new;
-      const c=$("chat"); const d=document.createElement("div"); d.className="msg";
-      d.innerHTML=`<span class="alias">${r.username}:</span> <span>${r.content}</span>`;
-      c.appendChild(d); c.scrollTop=c.scrollHeight;
-    }).subscribe();
-}
-
-/* ===================  RANKING  =================== */
-async function cargarRanking(){
-  const { data } = await supabase.from("users").select("username,coins").order("coins",{ascending:false}).limit(20);
-  const r=$("ranking"); r.innerHTML="";
-  (data||[]).forEach((u,i)=>{
-    const d=document.createElement("div"); d.className="r";
-    d.textContent = `#${i+1} ${u.username} — ${u.coins} monedas`;
-    r.appendChild(d);
-  });
-}
-
-/* ===================  PERSISTENCIA ENTRENAMIENTO  =================== */
-window.addEventListener("beforeunload", ()=>{
-  if(me){ localStorage.setItem(`train:${me.username}`, String(trainingLeft)); }
-});
 </script>
 </body>
 </html>
