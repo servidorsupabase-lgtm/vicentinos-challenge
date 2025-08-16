@@ -26,32 +26,6 @@
       overflow-x: hidden;
     }
 
-    /* Notificaciones */
-    .noti-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 300px;
-    }
-    .noti {
-      background: rgba(0, 0, 0, 0.9);
-      color: #0f0;
-      padding: 12px 16px;
-      border-left: 4px solid #0f0;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      box-shadow: 0 0 10px #0f0;
-      animation: slideIn 0.3s forwards;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
     /* Bienvenida pequeña */
     #bienvenida {
       position: fixed;
@@ -88,23 +62,6 @@
       color: #fff;
       text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
       z-index: 2;
-    }
-
-    /* Pelotas flotando */
-    .pelota {
-      position: absolute;
-      width: 30px;
-      height: 16.5px;
-      background: url('https://cdn-icons-png.flaticon.com/512/2243/2243887.png') no-repeat center/contain;
-      opacity: 0.2;
-      z-index: -1;
-      animation: flotar 25s infinite linear;
-    }
-    @keyframes flotar {
-      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 0.2; }
-      90% { opacity: 0.2; }
-      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
     }
 
     .container {
@@ -154,48 +111,6 @@
       transform: scale(1.03);
     }
 
-    /* Temporizador con jugador corriendo */
-    .temporizador {
-      width: 100%;
-      height: 20px;
-      background: #111;
-      border-radius: 10px;
-      margin: 15px 0;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid #0f0;
-    }
-    .barra-tiempo {
-      height: 100%;
-      width: 100%;
-      background: #0f0;
-      transition: none;
-    }
-    .jugador-corriendo {
-      position: absolute;
-      top: -5px;
-      left: 0;
-      width: 30px;
-      height: 15px;
-      background: url('https://cdn-icons-png.flaticon.com/512/723/723943.png') no-repeat center/contain;
-      transition: left 20s linear;
-      z-index: 2;
-    }
-
-    .pregunta {
-      margin: 15px 0;
-      font-size: 1.15rem;
-      line-height: 1.5;
-    }
-
-    .opciones button {
-      margin: 5px;
-      background: #111;
-      color: #0f0;
-      font-size: 0.95rem;
-      padding: 10px 12px;
-    }
-
     .msg {
       margin: 6px 0;
       padding: 6px;
@@ -206,56 +121,18 @@
       gap: 5px;
       font-size: 0.95rem;
     }
-    .msg-btn {
-      font-size: 0.65rem;
-      padding: 2px 4px;
-      min-width: 22px;
-      height: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
 
     .destacado {
       background: rgba(255, 215, 0, 0.2) !important;
       border-left-color: #ffdf00 !important;
       font-weight: bold;
     }
-
-    @media (max-width: 600px) {
-      .titulo { font-size: 2rem; }
-      .container { padding: 18px; }
-      .opciones button { padding: 10px 8px; font-size: 0.9rem; }
-    }
   </style>
 </head>
 <body>
 
-  <!-- Sonidos -->
-  <audio id="soundBienvenida" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opening-2034.mp3"></audio>
-  <audio id="soundApuesta" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-drop-384.mp3"></audio>
-  <audio id="soundCorrecto" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
-  <audio id="soundIncorrecto" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-946.mp3"></audio>
-  <audio id="soundNivel" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3"></audio>
-  <audio id="soundChat" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
-
-  <!-- Notificaciones -->
-  <div class="noti-container" id="notificaciones"></div>
-
   <!-- Bienvenida -->
   <div id="bienvenida">¡Bienvenido al desafío!</div>
-
-  <!-- Pelotas flotando -->
-  <script>
-    for (let i = 0; i < 8; i++) {
-      const pelota = document.createElement("div");
-      pelota.className = "pelota";
-      pelota.style.left = Math.random() * 100 + "vw";
-      pelota.style.animationDelay = Math.random() * 20 + "s";
-      pelota.style.animationDuration = (15 + Math.random() * 10) + "s";
-      document.body.appendChild(pelota);
-    }
-  </script>
 
   <div class="banner"><div class="titulo">Vicentinos Challenge 🏉🔥</div></div>
 
@@ -275,51 +152,23 @@
   <!-- ADMIN PANEL -->
   <div class="container" id="admin-panel" style="display:none;">
     <h2>🛠️ Panel de Control (Amo del Try)</h2>
-    <input type="text" id="admin-alias" placeholder="Alias del jugador" />
-    <input type="number" id="admin-monedas" placeholder="Cantidad de monedas" />
-    <div style="display:flex;flex-wrap:wrap;gap:5px;">
-      <button onclick="adminCargar()">✅ Cargar Monedas</button>
-      <button onclick="adminRestar()">❌ Restar Monedas</button>
-      <button onclick="adminEliminar()">🗑️ Eliminar Usuario</button>
-      <button onclick="volverAlMenu()">🏠 Menú Principal</button>
-    </div>
-
-    <!-- Mensaje del admin -->
-    <div style="margin-top:20px;">
-      <input type="text" id="admin-msg" placeholder="Mensaje público (ej: ¡Feliz día!)"/>
-      <button onclick="enviarAdminMsg()">📤 Enviar Mensaje</button>
-    </div>
+    <p>¡Bienvenido, Amo del Try! Aquí puedes gestionar el juego.</p>
+    <button onclick="volverAlMenu()">⬅️ Volver al menú</button>
   </div>
 
-  <!-- JUEGO -->
+  <!-- JUEGO (vacío por ahora, pero se muestra) -->
   <div class="container" id="juego" style="display:none;">
-    <h2><span id="nivel-texto">Nivel 1</span>: <span id="nivel-titulo">Iniciación</span></h2>
+    <h2>Nivel 1: Iniciación</h2>
     <p><strong>Jugador:</strong> <span id="jugador-nombre"></span></p>
     <p><strong>Monedas:</strong> <span id="monedas">0</span></p>
-    <p><strong>Preguntas restantes:</strong> <span id="preguntas-restantes">5</span></p>
-
-    <div class="temporizador">
-      <div class="barra-tiempo" id="barra-tiempo"></div>
-      <div class="jugador-corriendo" id="jugador-corriendo"></div>
-    </div>
-
-    <div id="fase-apuesta" style="display:block;">
-      <input type="number" id="apuesta-select" min="500" value="500" />
-      <button onclick="iniciarPregunta()">➡️ Jugar Pregunta</button>
-    </div>
-
-    <div id="pregunta-container" style="display:none;">
-      <div class="pregunta">
-        <p id="pregunta-texto"></p>
-      </div>
-      <div class="opciones" id="opciones"></div>
-    </div>
+    <p>Este es el juego. Las preguntas se cargarán pronto.</p>
+    <button onclick="volverAlMenu()">🏠 Menú Principal</button>
   </div>
 
   <!-- CHAT -->
   <div class="container" id="chat-container">
     <h2>💬 Chat del Estadio</h2>
-    <input type="text" id="msg" placeholder="¡Dale, tirá una picardía!" />
+    <input type="text" id="msg" placeholder="Escribe un mensaje..." />
     <button onclick="enviarChat()">Enviar</button>
     <div class="chat" id="chat"></div>
   </div>
@@ -331,72 +180,30 @@
   </div>
 
   <script>
-    // Sonidos
-    const play = (id) => {
-      const sound = document.getElementById(id);
-      if (sound) {
-        sound.currentTime = 0;
-        sound.play().catch(() => {});
-      }
-    };
-
-    // Notificaciones
-    const notificar = (mensaje, duracion = 3000) => {
-      const noti = document.createElement("div");
-      noti.className = "noti";
-      noti.textContent = mensaje;
-      document.getElementById("notificaciones").appendChild(noti);
-      setTimeout(() => {
-        noti.remove();
-      }, duracion);
-    };
-
-    // Inicializar Supabase
-    const supabase = supabase.createClient(
-      'https://aqkqbtunbyifbfrvkpxv.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY'
-    );
-
-    // Estado
-    let jugador = null;
-    let preguntasRespondidas = 0;
-    let tiempoRestante = 20;
-    let temporizador = null;
-    let preguntasNivel = [];
-    const TOKEN_ADMIN = "20250819802006";
-    let gratisUsadas = 0;
-
-    // Preguntas (ejemplo, puedes agregar hasta 80)
-    const preguntas = [
-      { q: "¿Cuántos jugadores tiene un equipo de rugby 15?", o: ["13", "15", "11", "7"], c: 1 },
-      { q: "¿Cuántos puntos vale un try?", o: ["3", "5", "6", "7"], c: 1 },
-      { q: "¿Qué país ganó el Mundial de Rugby 2023?", o: ["Francia", "Inglaterra", "Sudáfrica", "Nueva Zelanda"], c: 2 },
-      { q: "¿Quién es conocido como 'El Mago' en el rugby argentino?", o: ["Hugo Porta", "Agustín Pichot", "Felipe Contepomi", "Jerónimo de la Fuente"], c: 0 },
-      { q: "¿Qué posición inicia el juego con un kickoff?", o: ["Fullback", "Apertura", "Wing", "Pilar"], c: 0 },
-      { q: "¿Cuál es la sanción por un tackle alto?", o: ["Puntapié de mitad", "Penal", "Try", "Tarjeta amarilla"], c: 1 },
-      { q: "¿En qué año Argentina ingresó al Rugby Championship?", o: ["2010", "2012", "2014", "2016"], c: 1 },
-      { q: "¿Qué es un 'ruck'?", o: ["Formación de 8", "Lucha por el balón en el suelo", "Pase hacia atrás", "Patada de castigo"], c: 1 },
-      { q: "¿Quién fue el capitán de Los Pumas en el Mundial 2007?", o: ["Agustín Pichot", "Juan Martín Hernández", "Felipe Contepomi", "Omar Hasan"], c: 0 },
-      { q: "¿Cuál es la duración de un partido de rugby?", o: ["60 min", "70 min", "80 min", "90 min"], c: 2 }
-    ];
+    // Conectar a Supabase
+    const supabaseUrl = 'https://aqkqbtunbyifbfrvkpxv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     // Bienvenida: 2 segundos
     document.getElementById("bienvenida").style.display = "block";
-    play("soundBienvenida");
     setTimeout(() => {
       document.getElementById("bienvenida").style.display = "none";
     }, 2000);
 
+    // Iniciar juego
     async function iniciar() {
       const alias = document.getElementById("alias").value.trim();
       if (!alias) return alert("Alias requerido");
 
-      if (alias === TOKEN_ADMIN) {
+      // Verificar si es admin
+      if (alias === "20250819802006") {
         document.getElementById("inicio").style.display = "none";
         document.getElementById("admin-panel").style.display = "block";
         return;
       }
 
+      // Registrar o traer jugador
       const { data, error } = await supabase
         .from('users')
         .upsert({ username: alias, coins: 0 }, { onConflict: 'username' })
@@ -406,176 +213,31 @@
         alert("Error al conectar con la base de datos.");
         console.error(error);
       } else {
-        jugador = data[0];
+        const jugador = data[0];
         document.getElementById("inicio").style.display = "none";
-        notificar(`¡Bienvenido, ${alias}!`, 2000);
-        mostrarEntrenamiento();
+        document.getElementById("juego").style.display = "block";
+        document.getElementById("jugador-nombre").textContent = jugador.username;
+        document.getElementById("monedas").textContent = jugador.coins;
       }
-    }
-
-    function mostrarEntrenamiento() {
-      gratisUsadas = 0;
-      nuevaRonda();
-    }
-
-    function nuevaRonda() {
-      preguntasNivel = [...preguntas].sort(() => 0.5 - Math.random()).slice(0, 5);
-      preguntasRespondidas = 0;
-      mostrarApuesta();
-    }
-
-    function mostrarApuesta() {
-      clearInterval(temporizador);
-      document.getElementById("fase-apuesta").style.display = "block";
-      document.getElementById("pregunta-container").style.display = "none";
-      document.getElementById("barra-tiempo").style.width = "100%";
-      document.getElementById("jugador-corriendo").style.left = "0";
-    }
-
-    function iniciarPregunta() {
-      if (gratisUsadas < 3) {
-        gratisUsadas++;
-        notificar(`¡Pregunta gratuita! Te quedan ${3 - gratisUsadas}`);
-        play("soundApuesta");
-        mostrarPregunta();
-        return;
-      }
-
-      const apuesta = parseInt(document.getElementById("apuesta-select").value);
-      if (isNaN(apuesta) || apuesta < 500) return alert("Apuesta mínima: $500");
-      if (apuesta > jugador.coins) return alert("No tenés suficientes monedas");
-
-      play("soundApuesta");
-      notificar(`Apuesta de $${apuesta} realizada`, 2000);
-      mostrarPregunta(apuesta);
-    }
-
-    function mostrarPregunta(apuesta = 0) {
-      const p = preguntasNivel[preguntasRespondidas];
-      document.getElementById("pregunta-texto").textContent = p.q;
-      const opciones = document.getElementById("opciones");
-      opciones.innerHTML = "";
-      p.o.forEach((opc, idx) => {
-        const btn = document.createElement("button");
-        btn.textContent = opc;
-        btn.onclick = () => verificar(p.c, apuesta, idx === p.c);
-        opciones.appendChild(btn);
-      });
-
-      document.getElementById("fase-apuesta").style.display = "none";
-      document.getElementById("pregunta-container").style.display = "block";
-
-      tiempoRestante = 20;
-      const barra = document.getElementById("barra-tiempo");
-      const corredor = document.getElementById("jugador-corriendo");
-      corredor.style.left = "0";
-
-      temporizador = setInterval(() => {
-        tiempoRestante--;
-        const porcentaje = (tiempoRestante / 20) * 100;
-        barra.style.width = porcentaje + "%";
-        corredor.style.left = (100 - porcentaje) + "%";
-
-        if (tiempoRestante <= 0) {
-          clearInterval(temporizador);
-          play("soundIncorrecto");
-          notificar("⏰ ¡Tiempo agotado!", 3000);
-          if (apuesta > 0) {
-            jugador.coins -= apuesta;
-            actualizarMonedas();
-          }
-          preguntasRespondidas++;
-          if (preguntasRespondidas >= 5) {
-            avanzarNivel();
-          } else {
-            mostrarApuesta();
-          }
-        }
-      }, 1000);
-    }
-
-    function verificar(correcta, apuesta, acierto) {
-      clearInterval(temporizador);
-      if (acierto) {
-        if (apuesta > 0) {
-          jugador.coins += apuesta;
-          play("soundCorrecto");
-          notificar(`¡Correcto! Ganaste $${apuesta}`, 3000);
-        }
-      } else {
-        if (apuesta > 0) {
-          jugador.coins -= apuesta;
-          play("soundIncorrecto");
-          notificar(`❌ Incorrecto. Perdiste $${apuesta}`, 3000);
-        }
-      }
-      actualizarMonedas();
-      preguntasRespondidas++;
-      if (preguntasRespondidas >= 5) {
-        avanzarNivel();
-      } else {
-        mostrarApuesta();
-      }
-    }
-
-    function actualizarMonedas() {
-      document.getElementById("monedas").textContent = jugador.coins;
-    }
-
-    function avanzarNivel() {
-      jugador.level++;
-      play("soundNivel");
-      notificar(`🎉 ¡Subiste al Nivel ${jugador.level}!`, 4000);
-      nuevaRonda();
-    }
-
-    // === ADMIN ===
-    async function adminCargar() {
-      const alias = document.getElementById("admin-alias").value;
-      const cant = parseInt(document.getElementById("admin-monedas").value);
-      if (!alias || isNaN(cant)) return alert("Datos inválidos");
-      await supabase.rpc('update_user_coins', { uname: alias, amount: cant });
-      notificar(`✅ $${cant} cargadas a ${alias}`);
-    }
-
-    async function adminRestar() {
-      const alias = document.getElementById("admin-alias").value;
-      const cant = parseInt(document.getElementById("admin-monedas").value);
-      if (!alias || isNaN(cant)) return alert("Datos inválidos");
-      await supabase.rpc('update_user_coins', { uname: alias, amount: -cant });
-      notificar(`❌ $${cant} restadas a ${alias}`);
-    }
-
-    async function adminEliminar() {
-      const alias = document.getElementById("admin-alias").value;
-      if (!alias) return alert("Alias requerido");
-      await supabase.from('users').delete().eq('username', alias);
-      notificar(`🗑️ Usuario ${alias} eliminado`);
     }
 
     function volverAlMenu() {
+      document.getElementById("juego").style.display = "none";
       document.getElementById("admin-panel").style.display = "none";
       document.getElementById("inicio").style.display = "block";
     }
 
-    // === CHAT ===
+    // Chat
     async function enviarChat() {
       const msg = document.getElementById("msg").value.trim();
-      if (!msg || !jugador) return;
-      await supabase.from('messages').insert([{ username: jugador.username, content: msg }]);
-      document.getElementById("msg").value = "";
-      play("soundChat");
-    }
-
-    async function enviarAdminMsg() {
-      const msg = document.getElementById("admin-msg").value.trim();
       if (!msg) return;
-      await supabase.from('messages').insert([{ username: "Amo del Try", content: msg }]);
-      document.getElementById("admin-msg").value = "";
-      notificar("📢 Mensaje enviado al chat", 3000);
+      await supabase.from('messages').insert([{ username: "Jugador", content: msg }]);
+      document.getElementById("msg").value = "";
     }
 
-    supabase.channel('chat')
+    // Escuchar chat
+    supabase
+      .channel('chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const chat = document.getElementById("chat");
         const div = document.createElement("div");
@@ -583,14 +245,10 @@
         div.textContent = `${payload.new.username}: ${payload.new.content}`;
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
-        if (payload.new.username !== jugador?.username && payload.new.username !== "Amo del Try") {
-          play("soundChat");
-          notificar(`${payload.new.username}: ${payload.new.content}`, 4000);
-        }
       })
       .subscribe();
 
-    // === RANKING ===
+    // Ranking
     setInterval(async () => {
       const { data } = await supabase.from('users').select();
       const rank = document.getElementById("ranking");
@@ -600,8 +258,8 @@
         .slice(0, 10)
         .forEach((j, i) => {
           const item = document.createElement("div");
-          item.className = `rank-item ${i === 0 ? 'destacado' : ''}`;
-          item.textContent = `#${i+1} ${j.username} | $${j.coins} | Nv:${j.level}`;
+          item.className = i === 0 ? 'msg destacado' : 'msg';
+          item.textContent = `#${i+1} ${j.username} | $${j.coins}`;
           rank.appendChild(item);
         });
     }, 3000);
