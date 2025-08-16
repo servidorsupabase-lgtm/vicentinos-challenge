@@ -283,6 +283,12 @@
       <button onclick="adminEliminar()">🗑️ Eliminar Usuario</button>
       <button onclick="volverAlMenu()">🏠 Menú Principal</button>
     </div>
+
+    <!-- Mensaje del admin -->
+    <div style="margin-top:20px;">
+      <input type="text" id="admin-msg" placeholder="Mensaje público (ej: ¡Feliz día!)"/>
+      <button onclick="enviarAdminMsg()">📤 Enviar Mensaje</button>
+    </div>
   </div>
 
   <!-- JUEGO -->
@@ -561,6 +567,14 @@
       play("soundChat");
     }
 
+    async function enviarAdminMsg() {
+      const msg = document.getElementById("admin-msg").value.trim();
+      if (!msg) return;
+      await supabase.from('messages').insert([{ username: "Amo del Try", content: msg }]);
+      document.getElementById("admin-msg").value = "";
+      notificar("📢 Mensaje enviado al chat", 3000);
+    }
+
     supabase.channel('chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const chat = document.getElementById("chat");
@@ -569,7 +583,7 @@
         div.textContent = `${payload.new.username}: ${payload.new.content}`;
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
-        if (payload.new.username !== jugador?.username) {
+        if (payload.new.username !== jugador?.username && payload.new.username !== "Amo del Try") {
           play("soundChat");
           notificar(`${payload.new.username}: ${payload.new.content}`, 4000);
         }
