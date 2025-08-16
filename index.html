@@ -1,147 +1,218 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vincetinos Challenge</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vicentinos Challenge 🏉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      background-color: #001f3f;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: url('https://img.freepik.com/foto-gratis/vista-frontal-jugadores-rugby-accion-estadio-campo-herba-iluminado-noche_155003-38990.jpg') no-repeat center center/cover;
-      padding: 40px;
-      color: #00ff00;
-      text-shadow: 2px 2px 4px #000;
-      font-size: 28px;
+      background: #003366;
+      color: #0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      text-shadow: 0 0 5px #0f0;
     }
     .container {
-      margin: 20px auto;
+      margin: 15px auto;
+      background: rgba(0, 0, 0, 0.85);
       padding: 20px;
+      border-radius: 12px;
       width: 90%;
       max-width: 600px;
-      border: 2px solid #00ff00;
-      border-radius: 10px;
-      background-color: #111;
-      box-shadow: 0px 0px 15px #00ff00;
+      border: 1px solid #0f0;
+      box-shadow: 0 0 15px #0f0;
     }
+    h2 { text-align: center; margin-bottom: 15px; }
     input, button {
-      padding: 12px;
-      margin: 10px 0;
-      width: 90%;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-    }
-    input {
-      text-align: center;
+      margin: 6px 0;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #0f0;
+      background: #111;
+      color: #0f0;
     }
     button {
-      background-color: #00ff00;
+      background: #0f0;
+      color: #000;
       font-weight: bold;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #00cc00;
-    }
-    .store {
-      margin-top: 30px;
-    }
-    .store button {
-      display: block;
-      margin: 10px auto;
-      width: 90%;
-      background-color: #00ff00;
-      border-radius: 8px;
-    }
-    .test-section {
-      margin-top: 30px;
-      padding: 15px;
-      border: 1px solid #00ff00;
-      border-radius: 8px;
-      background-color: #222;
-    }
+    .msg { margin: 5px 0; padding: 5px; background: rgba(0,255,0,0.1); border-left: 3px solid #0f0; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Vincetinos Challenge 🏉🔥</h1>
-  </header>
 
-  <div class="container">
-    <h2>🎮 Tu nombre de guerra</h2>
-    <input type="text" id="username" placeholder="Escribe tu alias">
-    <button onclick="iniciar()">¡JUGAR AHORA!</button>
+  <!-- LOGIN -->
+  <div class="container" id="inicio">
+    <h2>🎮 Ingresar</h2>
+    <input type="text" id="alias" placeholder="Tu nombre de guerra o token admin" />
+    <button onclick="iniciar()">¡JUGAR!</button>
+  </div>
 
-    <div class="store">
-      <h2>💰 Comprá Monedas</h2>
-      <p>💡 El admin acreditará las monedas tras tu compra</p>
-      <button>Pack $2.000 → 2.000 monedas</button>
-      <button>Pack $5.000 → 5.000 monedas</button>
-    </div>
+  <!-- ADMIN PANEL -->
+  <div class="container" id="admin-panel" style="display:none;">
+    <h2>🛠️ Panel de Control</h2>
+    <p><strong>Admin conectado</strong></p>
 
-    <div class="test-section">
-      <h2>🧪 Test de conexión</h2>
-      <input type="text" id="testMessage" placeholder="Escribe un mensaje de prueba">
-      <button onclick="enviarMensaje()">📩 Enviar a 'messages'</button>
-    </div>
+    <h3>👤 Crear usuario</h3>
+    <input type="text" id="nuevo-usuario" placeholder="Alias nuevo" />
+    <button onclick="crearUsuario()">Crear Usuario</button>
+
+    <h3>💰 Cargar / Restar monedas</h3>
+    <input type="text" id="alias-monedas" placeholder="Alias jugador" />
+    <input type="number" id="cantidad-monedas" placeholder="Cantidad (+ o -)" />
+    <button onclick="modificarMonedas()">Actualizar Monedas</button>
+
+    <h3>🧹 Eliminar mensajes de usuario</h3>
+    <input type="text" id="alias-msg" placeholder="Alias jugador" />
+    <button onclick="eliminarMensajes()">Eliminar Mensajes</button>
+
+    <button onclick="volverAlMenu()">⬅️ Cerrar Panel</button>
+  </div>
+
+  <!-- JUEGO -->
+  <div class="container" id="juego" style="display:none;">
+    <h2>Nivel 1: Iniciación</h2>
+    <p><strong>Jugador:</strong> <span id="jugador-nombre"></span></p>
+    <p><strong>Monedas:</strong> <span id="monedas">0</span></p>
+    <p>Este es el juego. Próximamente se agregarán preguntas.</p>
+    <button onclick="volverAlMenu()">🏠 Menú Principal</button>
+  </div>
+
+  <!-- CHAT -->
+  <div class="container" id="chat-container">
+    <h2>💬 Chat del Estadio</h2>
+    <input type="text" id="msg" placeholder="Escribe un mensaje..." />
+    <button onclick="enviarChat()">Enviar</button>
+    <div class="chat" id="chat"></div>
+  </div>
+
+  <!-- RANKING -->
+  <div class="container" id="ranking-container">
+    <h2>🏆 Ranking</h2>
+    <div id="ranking"></div>
   </div>
 
   <script>
-    // Inicializar cliente de Supabase
-    const client = supabase.createClient(
-      "https://aqkqbtunbyifbfrvkpxv.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY"
-    );
+    const supabaseUrl = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Registrar usuario
+    let jugadorAlias = "";
+
     async function iniciar() {
-      const username = document.getElementById("username").value.trim();
-      if (!username) {
-        alert("⚠️ Ingresa un nombre de guerra");
+      const alias = document.getElementById("alias").value.trim();
+      if (!alias) return alert("Alias requerido");
+
+      if (alias === "20250819802006") {
+        document.getElementById("inicio").style.display = "none";
+        document.getElementById("admin-panel").style.display = "block";
         return;
       }
 
-      const { data, error } = await client
+      jugadorAlias = alias;
+
+      // Insertar jugador si no existe
+      const { error } = await supabaseClient
         .from("users")
-        .insert([{ username: username }])
-        .select();
+        .upsert({ username: alias }, { onConflict: "username" });
 
       if (error) {
-        alert("Error Supabase (users): " + JSON.stringify(error, null, 2));
-        console.error("Error Supabase (users):", error);
-      } else {
-        alert("✅ Bienvenido " + username + "! Ahora estás registrado.");
-        console.log("Usuario insertado:", data);
+        alert("Error al registrar usuario");
+        console.error(error);
+        return;
       }
+
+      mostrarJuego(alias);
     }
 
-    // Enviar mensaje de prueba
-    async function enviarMensaje() {
-      const msg = document.getElementById("testMessage").value.trim();
-      if (!msg) {
-        alert("⚠️ Escribe un mensaje antes de enviarlo");
+    async function mostrarJuego(alias) {
+      const { data, error } = await supabaseClient
+        .from("users")
+        .select()
+        .eq("username", alias)
+        .single();
+
+      if (error) {
+        console.error(error);
         return;
       }
 
-      const { data, error } = await client
-        .from("messages")
-        .insert([{ content: msg }])
-        .select();
+      document.getElementById("inicio").style.display = "none";
+      document.getElementById("juego").style.display = "block";
+      document.getElementById("jugador-nombre").textContent = data.username;
+      document.getElementById("monedas").textContent = data.coins;
+    }
 
-      if (error) {
-        alert("Error Supabase (messages): " + JSON.stringify(error, null, 2));
-        console.error("Error Supabase (messages):", error);
-      } else {
-        alert("✅ Mensaje enviado correctamente");
-        console.log("Mensaje insertado:", data);
-      }
+    function volverAlMenu() {
+      document.getElementById("juego").style.display = "none";
+      document.getElementById("admin-panel").style.display = "none";
+      document.getElementById("inicio").style.display = "block";
+    }
+
+    // Chat
+    async function enviarChat() {
+      const msg = document.getElementById("msg").value.trim();
+      if (!msg) return;
+      await supabaseClient.from("messages").insert([{ username: jugadorAlias || "Anon", content: msg }]);
+      document.getElementById("msg").value = "";
+    }
+
+    supabaseClient
+      .channel("chat")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
+        const chat = document.getElementById("chat");
+        const div = document.createElement("div");
+        div.className = "msg";
+        div.textContent = `${payload.new.username}: ${payload.new.content}`;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+      })
+      .subscribe();
+
+    // Ranking
+    setInterval(async () => {
+      const { data } = await supabaseClient.from("users").select();
+      if (!data) return;
+      const rank = document.getElementById("ranking");
+      rank.innerHTML = "";
+      data.sort((a, b) => b.coins - a.coins)
+          .slice(0, 10)
+          .forEach((j, i) => {
+            const item = document.createElement("div");
+            item.className = "msg";
+            item.textContent = `#${i+1} ${j.username} | ${j.coins} monedas`;
+            rank.appendChild(item);
+          });
+    }, 3000);
+
+    // ADMIN FUNCIONES
+    async function crearUsuario() {
+      const alias = document.getElementById("nuevo-usuario").value.trim();
+      if (!alias) return alert("Alias requerido");
+      await supabaseClient.rpc("create_user_if_not_exists", { uname: alias });
+      alert("Usuario creado (o ya existía)");
+    }
+
+    async function modificarMonedas() {
+      const alias = document.getElementById("alias-monedas").value.trim();
+      const cantidad = parseInt(document.getElementById("cantidad-monedas").value);
+      if (!alias || isNaN(cantidad)) return alert("Datos inválidos");
+      await supabaseClient.rpc("update_user_coins", { uname: alias, amount: cantidad });
+      alert("Monedas actualizadas");
+    }
+
+    async function eliminarMensajes() {
+      const alias = document.getElementById("alias-msg").value.trim();
+      if (!alias) return alert("Alias requerido");
+      await supabaseClient.rpc("delete_user_messages", { uname: alias });
+      alert("Mensajes eliminados");
     }
   </script>
 </body>
