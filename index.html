@@ -145,7 +145,7 @@
   </div>
 
   <!-- CHAT -->
-  <div class="container" id="chat-container">
+  <div class="container" id="chat-container" style="display:none;">
     <h2>💬 Chat del Estadio</h2>
     <input type="text" id="msg" placeholder="Escribe un mensaje..." />
     <button onclick="enviarChat()">Enviar</button>
@@ -160,15 +160,19 @@
 
   <script>
     // Conectar a Supabase
-    const supabase = supabase.createClient(
+    const { createClient } = supabase;
+    const db = createClient(
       'https://aqkqbtunbyifbfrvkpxv.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY'
     );
+
+    let currentAlias = null;
 
     // Iniciar juego
     async function iniciar() {
       const alias = document.getElementById("alias").value.trim();
       if (!alias) return alert("Alias requerido");
+      currentAlias = alias;
 
       // Verificar si es admin
       if (alias === "20250819802006") {
@@ -178,7 +182,7 @@
       }
 
       // Registrar o traer jugador
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('users')
         .upsert({ username: alias, coins: 0 }, { onConflict: 'username' })
         .select();
@@ -190,6 +194,7 @@
         const jugador = data[0];
         document.getElementById("inicio").style.display = "none";
         document.getElementById("juego").style.display = "block";
+        document.getElementById("chat-container").style.display = "block";
         document.getElementById("jugador-nombre").textContent = jugador.username;
         document.getElementById("monedas").textContent = jugador.coins;
       }
@@ -198,20 +203,20 @@
     function volverAlMenu() {
       document.getElementById("juego").style.display = "none";
       document.getElementById("admin-panel").style.display = "none";
+      document.getElementById("chat-container").style.display = "none";
       document.getElementById("inicio").style.display = "block";
     }
 
     // Chat
     async function enviarChat() {
       const msg = document.getElementById("msg").value.trim();
-      if (!msg) return;
-      await supabase.from('messages').insert([{ username: "Jugador", content: msg }]);
+      if (!msg || !currentAlias) return;
+      await db.from('messages').insert([{ username: currentAlias, content: msg }]);
       document.getElementById("msg").value = "";
     }
 
     // Escuchar chat
-    supabase
-      .channel('chat')
+    db.channel('chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const chat = document.getElementById("chat");
         const div = document.createElement("div");
@@ -224,7 +229,7 @@
 
     // Ranking
     setInterval(async () => {
-      const { data } = await supabase.from('users').select();
+      const { data } = await db.from('users').select();
       const rank = document.getElementById("ranking");
       rank.innerHTML = "";
       data
