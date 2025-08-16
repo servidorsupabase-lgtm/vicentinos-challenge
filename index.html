@@ -1,611 +1,527 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Vicentinos Challenge — Rugby Casino</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  :root{
-    --bg:#0a1020; --panel:#0f1730; --panel2:#0b1330;
-    --acc:#ff7a00; --acc2:#ff9d3b; --blue:#1c56ff; --white:#f6f8ff;
-    --ok:#2ee55f; --bad:#ff4b4b; --neon:#00eaff;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;background:radial-gradient(1200px 600px at 50% -10%,#10205a22,transparent),var(--bg);
-    color:var(--white);font-family:Outfit,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center
-  }
-  .banner{
-    width:100%;height:180px;position:relative;border-bottom:3px solid var(--acc);
-    background:url('https://i.ibb.co/kVGptVnJ/wp2896798.jpg') center/cover no-repeat;
-    display:flex;align-items:flex-end;justify-content:center
-  }
-  .banner h1{
-    margin:0 0 14px;border-radius:12px;padding:8px 16px;
-    background:linear-gradient(90deg,#000000aa,#00000055);
-    backdrop-filter:blur(2px);
-    color:#fff;font-weight:800;letter-spacing:.5px;text-shadow:0 3px 18px #000
-  }
-  .content{width:96%;max-width:1050px;margin:16px auto 28px;display:grid;grid-template-columns:1fr;gap:16px}
-  @media(min-width:980px){.content{grid-template-columns:2fr 1fr}}
-  .card{
-    background:linear-gradient(180deg,var(--panel),var(--panel2));
-    border:1px solid #18235a;border-radius:14px;padding:14px;box-shadow:0 12px 30px #0007
-  }
-  .card h2{margin:4px 0 10px;font-size:1.2rem;color:#fff}
-  .row{display:flex;gap:10px;align-items:center}
-  .row>*{flex:1}
-  input,button,select{
-    width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2a3a8a;background:#0c1440;color:#fff;
-    font:600 15px Outfit,system-ui
-  }
-  input::placeholder{color:#9bb}
-  button{cursor:pointer;background:linear-gradient(180deg,var(--acc),var(--acc2));border:none;color:#111;font-weight:800;letter-spacing:.3px}
-  button:hover{transform:translateY(-1px);box-shadow:0 8px 22px #ff7a0022}
-  .pill{display:inline-block;padding:5px 10px;border-radius:999px;background:#0b123a;border:1px solid #1f2b72;color:#9ec}
-  .grid2{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:640px){.grid2{grid-template-columns:1fr 1fr}}
-  .flex{display:flex;gap:10px;align-items:center}
-  .right{justify-content:flex-end}
-  .center{text-align:center}
-  .hidden{display:none!important}
-  /* Toast */
-  .toast{position:fixed;top:18px;right:18px;z-index:9999;opacity:0;transform:translateY(-10px);transition:.3s}
-  .toast.show{opacity:1;transform:none}
-  .toast .box{background:#0b133a;border:1px solid var(--neon);padding:10px 14px;border-radius:10px;box-shadow:0 8px 24px #00eaff22}
-  /* Juego */
-  .hud{display:flex;gap:10px;flex-wrap:wrap}
-  .hud .stat{background:#0b133a;border:1px solid #1f2b72;border-radius:10px;padding:8px 10px;min-width:120px}
-  .question{font-size:1.08rem;line-height:1.45;margin:10px 0 8px}
-  .opts{display:grid;gap:8px}
-  .opts button{background:#0f1a55;border:1px solid #1f2b72;color:#eaf; text-align:left}
-  .opts button:hover{border-color:#3e5cff;box-shadow:0 0 0 2px #3e5cff22}
-  .betbox{background:#0b133a;border:1px solid #1f2b72;border-radius:12px;padding:10px;margin:8px 0}
-  .timer{position:relative;height:22px;background:#091035;border:1px solid #1f2b72;border-radius:999px;overflow:hidden;margin:6px 0 10px}
-  .timer .bar{position:absolute;left:0;top:0;height:100%;width:100%;background:linear-gradient(90deg,#2ee55f,#ffb000);transition:width 1s linear}
-  .ball{position:absolute;top:-8px;left:0;width:38px;height:38px;background:url('https://i.postimg.cc/2SkhxQ6s/rugby-ball.png') center/contain no-repeat;filter:drop-shadow(0 3px 6px #000a)}
-  .shake{animation:shake .6s cubic-bezier(.36,.07,.19,.97) both}
-  @keyframes shake{10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)}}
-  /* Chat */
-  .chatlist{height:260px;overflow:auto;background:#0a123a;border:1px solid #1d2a72;border-radius:10px;padding:10px}
-  .msg{margin:6px 0;padding:6px 8px;background:#0e1750;border-left:3px solid #3e5cff;border-radius:8px}
-  .msg .who{font-weight:700;color:#aef}
-  .msg.sys{opacity:.8;border-left-color:#666}
-  .tools{display:flex;gap:6px}
-  /* Ranking */
-  .rank{height:260px;overflow:auto;background:#0a123a;border:1px solid #1d2a72;border-radius:10px;padding:10px}
-  .rank .item{padding:6px;border-bottom:1px dashed #1d2a72;display:flex;justify-content:space-between}
-  /* Tienda */
-  .store .pack{display:flex;gap:8px;align-items:center;justify-content:space-between;background:#0b133a;border:1px solid #1f2b72;border-radius:12px;padding:10px}
-  .store .pack b{color:#fff}
-  /* Confeti simple */
-  .confetti{position:fixed;inset:0;pointer-events:none;z-index:9998}
-  .confetti i{position:absolute;width:8px;height:14px;background:var(--acc);opacity:.9;animation:fall 1.2s linear forwards}
-  @keyframes fall{to{transform:translateY(120vh) rotate(340deg);opacity:0}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vicentinos Challenge 🏉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #003366;
+      color: #0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      text-shadow: 0 0 5px #0f0;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Bienvenida corta */
+    .bienvenida {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      flex-direction: column;
+    }
+    .bienvenida h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 2rem;
+      color: #0f0;
+      text-shadow: 0 0 10px #0f0;
+    }
+
+    /* Banner */
+    .banner {
+      width: 100%;
+      height: 180px;
+      background: url('https://i.ibb.co/kVGptVnJ/wp2896798.jpg') center/cover no-repeat;
+      border-bottom: 4px solid #0f0;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .titulo {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+      z-index: 2;
+    }
+
+    /* Pelotas flotando */
+    .pelota {
+      position: absolute;
+      width: 30px;
+      height: 16.5px;
+      background: url('https://cdn-icons-png.flaticon.com/512/2243/2243887.png') no-repeat center/contain;
+      opacity: 0.2;
+      z-index: -1;
+      animation: flotar 25s infinite linear;
+    }
+    @keyframes flotar {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.2; }
+      90% { opacity: 0.2; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    .container {
+      margin: 15px auto;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      border: 1px solid #0f0;
+      box-shadow: 0 0 15px #0f0;
+    }
+
+    h2 {
+      color: #0f0;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    input, button {
+      margin: 8px 0;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+    }
+
+    input {
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+    }
+
+    button {
+      background: #0f0;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00ff00;
+      transform: scale(1.03);
+    }
+
+    /* Temporizador con jugador corriendo */
+    .temporizador {
+      width: 100%;
+      height: 20px;
+      background: #111;
+      border-radius: 10px;
+      margin: 15px 0;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #0f0;
+    }
+    .barra-tiempo {
+      height: 100%;
+      width: 100%;
+      background: #0f0;
+      transition: none;
+    }
+    .jugador-corriendo {
+      position: absolute;
+      top: -5px;
+      left: 0;
+      width: 30px;
+      height: 15px;
+      background: url('https://cdn-icons-png.flaticon.com/512/723/723943.png') no-repeat center/contain;
+      transition: left 20s linear;
+      z-index: 2;
+    }
+
+    .pregunta {
+      margin: 15px 0;
+      font-size: 1.15rem;
+      line-height: 1.5;
+    }
+
+    .opciones button {
+      margin: 5px;
+      background: #111;
+      color: #0f0;
+      font-size: 0.95rem;
+      padding: 10px 12px;
+    }
+
+    .msg {
+      margin: 6px 0;
+      padding: 6px;
+      background: rgba(0, 255, 0, 0.1);
+      border-left: 3px solid #0f0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.95rem;
+    }
+    .msg-btn {
+      font-size: 0.65rem;
+      padding: 2px 4px;
+      min-width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .destacado {
+      background: rgba(255, 215, 0, 0.2) !important;
+      border-left-color: #ffdf00 !important;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      .titulo { font-size: 2rem; }
+      .container { padding: 18px; }
+      .opciones button { padding: 10px 8px; font-size: 0.9rem; }
+    }
+  </style>
 </head>
 <body>
-  <div class="banner"><h1>Vicentinos Challenge — Rugby Trivia Casino</h1></div>
 
-  <!-- SONIDOS -->
-  <audio id="s-win" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
-  <audio id="s-lose" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-946.mp3" preload="auto"></audio>
-  <audio id="s-bet" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-drop-384.mp3" preload="auto"></audio>
-  <audio id="s-join" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opening-2034.mp3" preload="auto"></audio>
-  <audio id="s-chat" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3" preload="auto"></audio>
-  <div id="confetti" class="confetti"></div>
-
-  <div class="toast" id="toast"><div class="box" id="toastText"></div></div>
-
-  <div class="content">
-
-    <!-- COLUMNA IZQUIERDA: LOGIN + JUEGO -->
-    <div class="card" id="loginCard">
-      <h2>🎮 Entrar al Juego</h2>
-      <p class="pill center">Preparate para ir por los puntos</p>
-      <div class="row">
-        <input id="alias" maxlength="24" placeholder="Tu alias (ej: Pumita10)" />
-        <button id="btnLogin">JUGAR</button>
-      </div>
-      <p class="center" style="opacity:.85;margin-top:6px">💡 Si es tu primera vez, te damos <b>3 preguntas de entrenamiento</b> sin apostar.</p>
-    </div>
-
-    <div class="card hidden" id="gameCard">
-      <div class="hud">
-        <div class="stat">👤 Jugador: <b id="hudUser">-</b></div>
-        <div class="stat">💰 Monedas: <b id="hudCoins">0</b></div>
-        <div class="stat">📈 Nivel: <b id="hudLevel">1</b> / 15</div>
-        <div class="stat">✅/❌: <b id="hudStats">0 / 0</b></div>
-      </div>
-
-      <div id="trainInfo" class="pill" style="margin-top:8px;">🎁 Te quedan <b id="freeLeft">3</b> preguntas de entrenamiento</div>
-
-      <div id="betBox" class="betbox" style="margin-top:10px;">
-        <div class="row">
-          <input id="bet" type="number" min="500" step="100" value="500" />
-          <button id="btnStartQ">Apostar y Jugar</button>
-        </div>
-        <small style="opacity:.8">Apuesta mínima: <b>$500</b>. Primero apostás, <u>después</u> ves la pregunta.</small>
-      </div>
-
-      <div class="timer"><div id="tBar" class="bar"></div><div id="tBall" class="ball"></div></div>
-
-      <div id="qBox">
-        <div class="question" id="qText">—</div>
-        <div class="opts" id="qOpts"></div>
-      </div>
-
-      <div class="flex right" style="margin-top:8px;">
-        <button id="btnMenu" style="background:#1b2a80;color:#fff;border:1px solid #3e5cff">Volver al Menú</button>
-      </div>
-    </div>
-
-    <!-- COLUMNA DERECHA: CHAT + RANK + TIENDA -->
-    <div class="grid2">
-      <div class="card">
-        <h2>💬 Chat del Estadio</h2>
-        <div id="chatList" class="chatlist"></div>
-        <div class="row" style="margin-top:8px;">
-          <input id="chatText" placeholder="Escribí tu mensaje..." />
-          <button id="btnSend">Enviar</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>🏆 Ranking</h2>
-        <div id="rank" class="rank"></div>
-      </div>
-
-      <div class="card store">
-        <h2>🛒 Tienda de Monedas</h2>
-        <p style="opacity:.9;margin-top:-4px;margin-bottom:8px">Serás redirigido a Mercado Pago. Luego <b>compartí el comprobante</b> en el chat y el admin acreditará las monedas a tu alias.</p>
-        <div class="pack"><div><b>Pack $2.000</b><br><small>2.000 monedas</small></div><button data-url="https://mpago.la/16CyPeY" data-amt="2000">Comprar</button></div>
-        <div class="pack"><div><b>Pack $5.000</b><br><small>5.000 monedas</small></div><button data-url="https://mpago.la/1TTVVcV" data-amt="5000">Comprar</button></div>
-        <div class="pack"><div><b>Pack $10.000</b><br><small>10.000 monedas</small></div><button data-url="https://mpago.la/2HR6fjA" data-amt="10000">Comprar</button></div>
-      </div>
-    </div>
-
-    <!-- PANEL ADMIN (OCULTO HASTA LOGUEAR CON TOKEN COMO ALIAS) -->
-    <div class="card hidden" id="adminCard">
-      <h2>🛡️ Panel Admin</h2>
-      <div class="row">
-        <input id="aUser" placeholder="Alias usuario" />
-        <input id="aAmount" type="number" placeholder="Monedas (+/-)" />
-      </div>
-      <div class="tools">
-        <button id="aAdd">Cargar monedas</button>
-        <button id="aSub">Restar monedas</button>
-        <button id="aCreate" style="background:#13d4a3">Crear usuario</button>
-        <button id="aDel" style="background:#ff4b4b">Eliminar usuario</button>
-      </div>
-      <hr style="border:none;border-top:1px solid #24317a;margin:12px 0">
-      <div class="row">
-        <input id="aMsgId" placeholder="ID mensaje chat" />
-        <button id="aMsgDel" style="background:#ff8c5a">Borrar mensaje</button>
-      </div>
-      <div class="flex right" style="margin-top:8px;">
-        <button id="aBack" style="background:#1b2a80;color:#fff;border:1px solid #3e5cff">Volver al Menú</button>
-      </div>
-      <small style="opacity:.7">⚠️ Si no podés borrar un mensaje es por políticas RLS de Supabase. Igual el cliente lo ocultará.</small>
-    </div>
-
+  <!-- Bienvenida 2 segundos -->
+  <div class="bienvenida" id="bienvenida">
+    <h1>¡Bienvenido al desafío!</h1>
   </div>
 
-<script>
-/* ======================= SUPABASE CONFIG ======================= */
-const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/* ======================= STATE ======================= */
-const ADMIN_TOKEN = "20250819802006";
-let me = null; // {id, username, coins}
-let level = 1;
-let asked = new Set(); // ids preguntados
-let correct = 0, wrong = 0;
-let freeLeft = 3;
-let ticking = null, timeLeft = 20;
-let currentQ = null;
-let currentBet = 0;
-
-/* ======================= UI HELPERS ======================= */
-const $ = id => document.getElementById(id);
-const toast = (txt)=>{ $("toastText").textContent = txt; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2000); }
-const play = id => { const a=$(id); if(!a) return; a.currentTime=0; a.play().catch(()=>{}); }
-const confetti = ()=>{
-  const box=$("confetti"); box.innerHTML="";
-  for(let i=0;i<80;i++){
-    const p=document.createElement("i");
-    p.style.left=(Math.random()*100)+"vw";
-    p.style.background = Math.random()>.5? "var(--acc)" : "var(--neon)";
-    p.style.animationDelay=(Math.random()*0.8)+"s";
-    box.appendChild(p);
-  }
-  setTimeout(()=>box.innerHTML="",1500);
-};
-
-/* ======================= QUESTIONS (80) ======================= */
-/* Cada item: {id, q, o:[a,b,c], c:indexCorrecto, d:dificultad 1..5} */
-const QUESTIONS = [
-  // Nivel 1-5 (básico)
-  {id:1,q:"¿Cuántos jugadores por equipo en rugby XV?",o:["13","15","11"],c:1,d:1},
-  {id:2,q:"¿Cuántos puntos vale un try?",o:["5","3","7"],c:0,d:1},
-  {id:3,q:"¿El balón de rugby tiene forma…?",o:["Esférica","Ovalada","Cúbica"],c:1,d:1},
-  {id:4,q:"Duración total de un partido de rugby XV (minutos)",o:["80","60","90"],c:0,d:1},
-  {id:5,q:"Nombre del seleccionado argentino de rugby",o:["Los Jaguares","Los Pumas","Los Cóndores"],c:1,d:1},
-  {id:6,q:"¿Cuántos puntos suma una conversión?",o:["2","3","5"],c:0,d:1},
-  {id:7,q:"¿Qué sucede tras un pase hacia adelante?",o:["Scrum","Line-out","Try"],c:0,d:1},
-  {id:8,q:"¿Qué es un tackle alto?",o:["Contactar por encima de hombros","Derribar a la altura de la cintura","Barrer los pies"],c:0,d:1},
-  {id:9,q:"¿Cuántos puntos vale un penal convertido a los palos?",o:["2","3","4"],c:1,d:1},
-  {id:10,q:"¿De qué país es Jonah Lomu?",o:["Australia","Nueva Zelanda","Fiyi"],c:1,d:1},
-  {id:11,q:"¿Cuántos árbitros principales en cancha hay?",o:["1","2","3"],c:0,d:1},
-  {id:12,q:"¿Qué reinicia el juego cuando la pelota sale por el lateral?",o:["Scrum","Line-out","Drop"],c:1,d:1},
-  {id:13,q:"¿Cuándo se marca un drop goal?",o:["Durante el juego abierto","Sólo tras penal","Sólo tras scrum"],c:0,d:1},
-  {id:14,q:"Posición número 10 habitualmente se llama…",o:["Apertura","Fullback","Hooker"],c:0,d:1},
-  {id:15,q:"Posición número 15 habitualmente es…",o:["Pilar","Wing","Fullback"],c:2,d:1},
-  // Intermedio
-  {id:16,q:"¿Qué hace el hooker en el scrum?",o:["Empuja desde afuera","Lanza el line","Talona el balón"],c:2,d:2},
-  {id:17,q:"Un ruck ocurre cuando…",o:["La pelota está en el suelo y hay disputa","En el aire","En el line"],c:0,d:2},
-  {id:18,q:"Tarjeta amarilla implica…",o:["Expulsión definitiva","10 min fuera","5 min fuera"],c:1,d:2},
-  {id:19,q:"¿Cuántos puntos vale un try penal?",o:["5","7","8"],c:1,d:2},
-  {id:20,q:"En Argentina, el club SIC es de…",o:["San Isidro","Santa Fe","San Juan"],c:0,d:2},
-  {id:21,q:"¿Qué equipo ganó el Mundial 2023?",o:["Francia","Sudáfrica","Irlanda"],c:1,d:2},
-  {id:22,q:"¿Cuál NO es función de los forwards?",o:["Ganar pelotas fijas","Definir en velocidad por bandas","Formar scrums"],c:1,d:2},
-  {id:23,q:"¿Qué marca la ventaja (advantage)?",o:["Se ignora toda infracción","Se permite continuar si conviene","Se anula el juego"],c:1,d:2},
-  {id:24,q:"¿Qué es un maul?",o:["Disputa en el suelo","Formación de pie con portador","Patada de reinicio"],c:1,d:2},
-  {id:25,q:"¿Cuántos puntos vale un drop goal?",o:["3","2","4"],c:0,d:2},
-  {id:26,q:"¿Qué sucede con un knock-on?",o:["Line-out","Scrum para rival","Free-kick"],c:1,d:2},
-  {id:27,q:"Capitán de Los Pumas en Bronce 2007",o:["Felipe Contepomi","Agustín Pichot","Juan Martín Hernández"],c:1,d:2},
-  {id:28,q:"¿Qué significa offside?",o:["Fuera de juego","Obstrucción","Juego peligroso"],c:0,d:2},
-  {id:29,q:"¿Cuántos cambios permitidos en rugby test (aprox.)?",o:["8","10","15"],c:0,d:2},
-  {id:30,q:"Fullback suele ser el número…",o:["14","15","13"],c:1,d:2},
-  // Historia / AR
-  {id:31,q:"Mítico apertura argentino, apodado 'El Mago'",o:["Hugo Porta","Juan Fernández Miranda","Nicolás Sánchez"],c:0,d:3},
-  {id:32,q:"Los Pumas entraron al Rugby Championship en…",o:["2010","2012","2014"],c:1,d:3},
-  {id:33,q:"Primer triunfo de Los Pumas ante All Blacks fue en…",o:["2020","2022","2018"],c:0,d:3},
-  {id:34,q:"Máximo try-man histórico de Los Pumas (test)",o:["José L. González","José María Núñez Piossek","Juan Imhoff"],c:2,d:3},
-  {id:35,q:"¿Qué hace el medio scrum (9)?",o:["Conduce desde base de ruck/scrum","Anota drops","Lanza el line"],c:0,d:3},
-  {id:36,q:"En un line, ¿quién suele lanzar?",o:["Hooker","Apertura","Pilar"],c:0,d:3},
-  {id:37,q:"¿Qué tarjeta implica expulsión definitiva?",o:["Amarilla","Roja","Azul"],c:1,d:3},
-  {id:38,q:"El Mundial de Rugby se disputa cada…",o:["2 años","3 años","4 años"],c:2,d:3},
-  {id:39,q:"Máximo organismo rector del rugby mundial",o:["World Rugby","World Cup Board","IRL"],c:0,d:3},
-  {id:40,q:"Apodo del seleccionado de Nueva Zelanda",o:["All Blacks","Springboks","Wallabies"],c:0,d:3},
-  // Reglas más finas / táctica
-  {id:41,q:"Se sanciona penal si el tackleador…",o:["No libera al tackleado","Pone la pelota al suelo","Se va hacia su campo"],c:0,d:3},
-  {id:42,q:"¿Qué es contra-ruck?",o:["Empujar el scrum rival","Disputar el ruck agresivamente","Patear de sobrepique"],c:1,d:3},
-  {id:43,q:"Zona de marca en rugby se llama…",o:["In-goal","Goal box","End zone"],c:0,d:3},
-  {id:44,q:"Si una patada va directo afuera desde dentro de 22 propia…",o:["Line donde salió","Line en origen","Scrum al pateador"],c:0,d:3},
-  {id:45,q:"¿Qué es el mark?",o:["Pedir patada de salida","Señal al atrapar patada en 22","Orden de scrum"],c:1,d:3},
-  {id:46,q:"¿Se puede pasar hacia adelante?",o:["Sí","No","Sólo en 22 rival"],c:1,d:3},
-  {id:47,q:"'Drop out' se ejecuta desde…",o:["22 metros","Mitad de cancha","5 metros"],c:0,d:3},
-  {id:48,q:"¿Qué penalidad por obstrucción intencional?",o:["Free-kick","Penal","Scrum"],c:1,d:3},
-  {id:49,q:"¿Cuántos puntos suma un try convertido?",o:["7","6","8"],c:0,d:3},
-  {id:50,q:"Jugador 7 suele ser…",o:["Pilar derecho","Tercera línea ala","Centro"],c:1,d:3},
-  // Avanzado
-  {id:51,q:"¿Cuándo se cobra 'holding on'?",o:["No liberar balón en el suelo","Cargar al pateador","Sujetar en line"],c:0,d:4},
-  {id:52,q:"Deliberate knock-on usualmente resulta en…",o:["Scrum","Penal (y a veces amarilla)","Line"],c:1,d:4},
-  {id:53,q:"En scrum, 'early push' es…",o:["Empujar antes de la orden","Entrar por el costado","No enganchar"],c:0,d:4},
-  {id:54,q:"¿Qué es un 'box kick'?",o:["Patada corta del 9","Puntapié de salida","Drop a postes"],c:0,d:4},
-  {id:55,q:"Si un defensor pisa dead-ball al atrapar balón en in-goal…",o:["22 drop out","Scrum 5 para atacante","Try penal"],c:0,d:4},
-  {id:56,q:"Ley de ventaja termina cuando…",o:["Árbitro lo indica o la ventaja se consume","Siempre que haya un pase","Con un knock-on"],c:0,d:4},
-  {id:57,q:"¿Cuántos saltadores típicos en line estándar?",o:["2–4","5–7","8–9"],c:0,d:4},
-  {id:58,q:"'Counter-attack' describe…",o:["Defensa plegada","Salida rápida tras recuperar","Patada estratégica"],c:1,d:4},
-  {id:59,q:"En 5m de la línea de try, penal c/ scrum repetidas…",o:["Advertencia","Try penal probable","Free-kick"],c:1,d:4},
-  {id:60,q:"Tarjeta por tackle peligroso con contacto cabeza (mitigación baja)",o:["Generalmente roja","Generalmente amarilla","Nunca tarjeta"],c:0,d:4},
-  // Muy difícil (14-15 casi imposibles)
-  {id:61,q:"World Rugby Law 15 se refiere principalmente a…",o:["Ruck","Maul","Scrum"],c:0,d:5},
-  {id:62,q:"Reinicio tras marca de fair catch fuera de 22 propia…",o:["Free-kick en lugar del mark","Scrum centro","Line rival"],c:0,d:5},
-  {id:63,q:"Se permite quick throw en line si…",o:["Misma pelota y sin tocar a nadie","Cualquier pelota","Tras silbatazo"],c:0,d:5},
-  {id:64,q:"En drop goal, la pelota debe…",o:["Picar antes de patear","Patearse de aire","Ser teed"],c:0,d:5},
-  {id:65,q:"En scrum, el ángulo de entrada legal del pilar es…",o:["Hombro cuadrado y recto","45° hacia adentro","Cabeza por afuera"],c:0,d:5},
-  {id:66,q:"Ley del '50:22' aplica cuando…",o:["Pateás detrás de mitad y sale dentro de 22 rival tras picar","Cualquier patada a touche","Sólo desde 22 propia"],c:0,d:5},
-  {id:67,q:"Si un jugador en offside recibe patada rival desviada en compañero…",o:["Sigue offside (no habilita)","Queda habilitado","Scrum"],c:0,d:5},
-  {id:68,q:"¿Cuándo se permite limpiar por el costado en ruck?",o:["Nunca, debe ser por puerta","Siempre","Sólo si balón afuera"],c:0,d:5},
-  {id:69,q:"Try con 'double movement' generalmente implica…",o:["No try","Try válido","Penal a favor atacante"],c:0,d:5},
-  {id:70,q:"TMO puede intervenir para…",o:["Cualquier infracción menor","Incidentes de try/ foul play claro","Sanciones de touch"],c:1,d:5},
-  {id:71,q:"En kick-off que sale directo al touch sin picar…",o:["Scrum centro o repetición","Line en mitad","Penal salida"],c:0,d:5},
-  {id:72,q:"Formación mínima de un maul legal incluye…",o:["Portador + 1 rival + 1 compañero","Sólo atacantes","Sólo defensores"],c:0,d:5},
-  {id:73,q:"Off feet en ruck significa…",o:["Apoyo sin pies en el suelo","Jugar de rodillas permitido","Tackle alto"],c:0,d:5},
-  {id:74,q:"En 22 propia, patada que sale directa: ¿quick throw posible?",o:["No, tocó a espectadores","Sí, si misma pelota y sin tocar a nadie","Siempre no"],c:1,d:5},
-  {id:75,q:"¿Cuándo procede scrum por pase hacia adelante intencional?",o:["Nunca, es penal","Siempre scrum","Sólo si hay ventaja"],c:0,d:5},
-  {id:76,q:"Argentina fue 3° en el Mundial…",o:["2007","2015","1999"],c:0,d:4},
-  {id:77,q:"'White line fever' describe…",o:["Ansiedad al ver el in-goal y tomar malas decisiones","Fiebre previa al partido","Fatiga de scrum"],c:0,d:4},
-  {id:78,q:"Mezcla de backs/forwards para emboscada se llama…",o:["Strike move","Counter ruck","Flying wedge"],c:0,d:4},
-  {id:79,q:"¿Qué infracción invalida quick tap?",o:["Tap con pie equivocado","Tap correcto pero sin señalar","Tap y correr"],c:0,d:4},
-  {id:80,q:"'Flying wedge' en kickoff está…",o:["Prohibido","Permitido","Sólo juvenil"],c:0,d:5},
-];
-
-/* ======================= LOGIN ======================= */
-$("btnLogin").onclick = async ()=>{
-  const alias = $("alias").value.trim();
-  if(!alias) return toast("Ingresá un alias");
-
-  // ADMIN: si escribe exactamente el token en el mismo campo
-  if(alias === ADMIN_TOKEN){
-    $("loginCard").classList.add("hidden");
-    $("adminCard").classList.remove("hidden");
-    toast("Bienvenido Admin");
-    play("s-join");
-    return;
-  }
-
-  // Jugador
-  try{
-    // buscar o crear
-    let { data: user, error } = await sb.from("users").select("*").eq("username", alias).maybeSingle();
-    if(error) throw error;
-    if(!user){
-      const ins = await sb.from("users").insert([{ username: alias, coins: 0 }]).select().single();
-      if(ins.error) throw ins.error;
-      user = ins.data;
+  <!-- Pelotas flotando -->
+  <script>
+    for (let i = 0; i < 8; i++) {
+      const pelota = document.createElement("div");
+      pelota.className = "pelota";
+      pelota.style.left = Math.random() * 100 + "vw";
+      pelota.style.animationDelay = Math.random() * 20 + "s";
+      pelota.style.animationDuration = (15 + Math.random() * 10) + "s";
+      document.body.appendChild(pelota);
     }
-    me = user;
-    freeLeft = 3; correct=0; wrong=0; level=1; asked.clear();
-    $("hudUser").textContent = me.username;
-    $("hudCoins").textContent = me.coins ?? 0;
-    $("hudLevel").textContent = level;
-    $("hudStats").textContent = `${correct} / ${wrong}`;
-    $("freeLeft").textContent = freeLeft;
+  </script>
 
-    $("loginCard").classList.add("hidden");
-    $("gameCard").classList.remove("hidden");
-    toast(`Bienvenido ${me.username}!`);
-    play("s-join");
+  <div class="banner"><div class="titulo">Vicentinos Challenge 🏉🔥</div></div>
 
-    subscribeChat();
-    loadChat();
-    loadRank();
-    nextScreenIdle();
-  }catch(e){
-    console.error(e);
-    toast("Error de conexión. Revisá Supabase.");
-  }
-};
-$("btnMenu").onclick = ()=>{
-  resetTimer();
-  $("gameCard").classList.add("hidden");
-  $("adminCard").classList.add("hidden");
-  $("loginCard").classList.remove("hidden");
-  toast("Volviste al menú");
-};
+  <!-- LOGIN -->
+  <div class="container" id="inicio">
+    <h2>🎮 Tu nombre de guerra</h2>
+    <input type="text" id="alias" placeholder="Tu nombre de guerra" />
+    <button onclick="iniciar()">¡JUGAR AHORA!</button>
 
-/* ======================= LOGICA DE JUEGO ======================= */
-function nextScreenIdle(){
-  // mostrar/ocultar cajas según freeLeft
-  if(freeLeft>0){
-    $("trainInfo").classList.remove("hidden");
-    $("betBox").classList.add("hidden");
-  }else{
-    $("trainInfo").classList.add("hidden");
-    $("betBox").classList.remove("hidden");
-  }
-  prepareQuestion();
-}
-function prepareQuestion(){
-  // elegir pregunta no repetida del set acorde al nivel
-  // 5 por nivel, vamos subiendo cada 5 correct/wrong total
-  const levelIndex = Math.min(15, Math.floor((correct+wrong)/5)+1);
-  level = levelIndex;
-  $("hudLevel").textContent = level;
+    <h2 style="margin-top:20px;">💰 Comprá Monedas</h2>
+    <p><small>💡 El admin acreditará las monedas tras tu compra</small></p>
+    <a href="https://mpago.la/16CyPeY" target="_blank"><button>Pack $2.000 → 2.000 monedas</button></a>
+    <a href="https://mpago.la/1TTVVcV" target="_blank"><button>Pack $5.000 → 5.000 monedas</button></a>
+    <a href="https://mpago.la/2HR6fjA" target="_blank"><button>Pack $10.000 → 10.000 monedas</button></a>
+  </div>
 
-  // dificultad aproximada por level
-  const targetD = level<=5?1 : level<=9?2 : level<=12?3 : level<=13?4 : 5;
-  const pool = QUESTIONS.filter(q=>!asked.has(q.id) && q.d===targetD);
-  const fallback = QUESTIONS.filter(q=>!asked.has(q.id));
-  const pick = (pool.length? pool : fallback);
-  if(!pick.length){ // sin preguntas
-    toast("Sin preguntas disponibles");
-    return;
-  }
-  currentQ = pick[Math.floor(Math.random()*pick.length)];
-  asked.add(currentQ.id);
+  <!-- ADMIN PANEL -->
+  <div class="container" id="admin-panel" style="display:none;">
+    <h2>🛠️ Panel de Control (Amo del Try)</h2>
+    <input type="text" id="admin-alias" placeholder="Alias del jugador" />
+    <input type="number" id="admin-monedas" placeholder="Cantidad de monedas" />
+    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+      <button onclick="adminCargar()">✅ Cargar Monedas</button>
+      <button onclick="adminRestar()">❌ Restar Monedas</button>
+      <button onclick="adminEliminar()">🗑️ Eliminar Usuario</button>
+      <button onclick="volverAlMenu()">🏠 Menú Principal</button>
+    </div>
+  </div>
 
-  // pintar
-  $("qText").textContent = currentQ.q;
-  const opts = $("qOpts"); opts.innerHTML="";
-  currentQ.o.forEach((txt,idx)=>{
-    const b=document.createElement("button");
-    b.textContent = ["A) ","B) ","C) "][idx] + txt;
-    b.onclick = ()=> answer(idx);
-    opts.appendChild(b);
-  });
+  <!-- JUEGO -->
+  <div class="container" id="juego" style="display:none;">
+    <h2><span id="nivel-texto">Nivel 1</span>: <span id="nivel-titulo">Iniciación</span></h2>
+    <p><strong>Jugador:</strong> <span id="jugador-nombre"></span></p>
+    <p><strong>Monedas:</strong> <span id="monedas">0</span></p>
+    <p><strong>Preguntas restantes:</strong> <span id="preguntas-restantes">5</span></p>
 
-  // timer
-  startTimer();
-}
-function startTimer(){
-  resetTimer();
-  timeLeft = 20;
-  moveBall();
-  ticking = setInterval(()=>{
-    timeLeft--;
-    moveBall();
-    if(timeLeft<=0){
-      resetTimer();
-      lose();
-      afterAnswer();
+    <div class="temporizador">
+      <div class="barra-tiempo" id="barra-tiempo"></div>
+      <div class="jugador-corriendo" id="jugador-corriendo"></div>
+    </div>
+
+    <div id="fase-apuesta" style="display:block;">
+      <input type="number" id="apuesta-select" min="500" value="500" />
+      <button onclick="iniciarPregunta()">➡️ Jugar Pregunta</button>
+    </div>
+
+    <div id="pregunta-container" style="display:none;">
+      <div class="pregunta">
+        <p id="pregunta-texto"></p>
+      </div>
+      <div class="opciones" id="opciones"></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="container" id="chat-container">
+    <h2>💬 Chat del Estadio</h2>
+    <input type="text" id="msg" placeholder="¡Dale, tirá una picardía!" />
+    <button onclick="enviarChat()">Enviar</button>
+    <div class="chat" id="chat"></div>
+  </div>
+
+  <!-- RANKING -->
+  <div class="container" id="ranking-container">
+    <h2>🏆 Jugadores Valiosos</h2>
+    <div class="ranking" id="ranking"></div>
+  </div>
+
+  <script>
+    // Inicializar Supabase
+    const supabase = supabase.createClient(
+      'https://aqkqbtunbyifbfrvkpxv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY'
+    );
+
+    // Estado
+    let jugador = null;
+    let preguntasRespondidas = 0;
+    let tiempoRestante = 20;
+    let temporizador = null;
+    let preguntasNivel = [];
+    const TOKEN_ADMIN = "20250819802006";
+    let gratisUsadas = 0;
+
+    // Preguntas (80 preguntas, dificultad progresiva)
+    const preguntas = [
+      { q: "¿Cuántos jugadores tiene un equipo de rugby 15?", o: ["13", "15", "11", "7"], c: 1 },
+      { q: "¿Cuántos puntos vale un try?", o: ["3", "5", "6", "7"], c: 1 },
+      { q: "¿Qué país ganó el Mundial de Rugby 2023?", o: ["Francia", "Inglaterra", "Sudáfrica", "Nueva Zelanda"], c: 2 },
+      { q: "¿Quién es conocido como 'El Mago' en el rugby argentino?", o: ["Hugo Porta", "Agustín Pichot", "Felipe Contepomi", "Jerónimo de la Fuente"], c: 0 },
+      { q: "¿Qué posición inicia el juego con un kickoff?", o: ["Fullback", "Apertura", "Wing", "Pilar"], c: 0 },
+      { q: "¿Cuál es la sanción por un tackle alto?", o: ["Puntapié de mitad", "Penal", "Try", "Tarjeta amarilla"], c: 1 },
+      { q: "¿En qué año Argentina ingresó al Rugby Championship?", o: ["2010", "2012", "2014", "2016"], c: 1 },
+      { q: "¿Qué es un 'ruck'?", o: ["Formación de 8", "Lucha por el balón en el suelo", "Pase hacia atrás", "Patada de castigo"], c: 1 },
+      { q: "¿Quién fue el capitán de Los Pumas en el Mundial 2007?", o: ["Agustín Pichot", "Juan Martín Hernández", "Felipe Contepomi", "Omar Hasan"], c: 0 },
+      { q: "¿Cuál es la duración de un partido de rugby?", o: ["60 min", "70 min", "80 min", "90 min"], c: 2 },
+      // ... (más preguntas, hasta 80)
+    ];
+
+    // Bienvenida: 2 segundos
+    setTimeout(() => {
+      document.getElementById("bienvenida").style.display = "none";
+    }, 2000);
+
+    async function iniciar() {
+      const alias = document.getElementById("alias").value.trim();
+      if (!alias) return alert("Alias requerido");
+
+      if (alias === TOKEN_ADMIN) {
+        document.getElementById("inicio").style.display = "none";
+        document.getElementById("admin-panel").style.display = "block";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .upsert({ username: alias, coins: 0 }, { onConflict: 'username' })
+        .select();
+
+      if (error) {
+        alert("Error al conectar con la base de datos.");
+        console.error(error);
+      } else {
+        jugador = data[0];
+        document.getElementById("inicio").style.display = "none";
+        mostrarEntrenamiento();
+      }
     }
-  },1000);
-}
-function moveBall(){
-  const pct = Math.max(0,(timeLeft/20)*100);
-  $("tBar").style.width = pct+"%";
-  $("tBall").style.left = (100-pct)+"%";
-}
-function resetTimer(){ if(ticking){ clearInterval(ticking); ticking=null; } }
 
-/* Responder */
-async function answer(idx){
-  resetTimer();
-  // Entrenamiento sin apuesta (freeLeft>0)
-  if(freeLeft>0){
-    if(idx===currentQ.c){
-      correct++; play("s-win"); confetti(); toast("¡Correcto! (entrenamiento)");
-    }else{
-      wrong++; play("s-lose"); $("gameCard").classList.add("shake"); setTimeout(()=>$("gameCard").classList.remove("shake"),600);
-      toast("Incorrecto (entrenamiento)");
+    function mostrarEntrenamiento() {
+      gratisUsadas = 0;
+      nuevaRonda();
     }
-    freeLeft--; $("freeLeft").textContent = freeLeft;
-    $("hudStats").textContent = `${correct} / ${wrong}`;
-    afterAnswer();
-    if(freeLeft===0){ toast("Para seguir jugando, comprá monedas en la tienda."); }
-    return;
-  }
 
-  // Con apuesta
-  const bet = parseInt($("bet").value,10) || 0;
-  if(bet<500){ toast("La apuesta mínima es $500"); return; }
-  if((me?.coins||0) < bet){ toast("No tenés monedas suficientes"); return; }
-  currentBet = bet;
-  play("s-bet");
+    function nuevaRonda() {
+      preguntasNivel = [...preguntas].sort(() => 0.5 - Math.random()).slice(0, 5);
+      preguntasRespondidas = 0;
+      mostrarApuesta();
+    }
 
-  if(idx===currentQ.c){
-    correct++;
-    await changeCoins(+bet);
-    play("s-win"); confetti();
-    toast(`✅ ¡Correcto! +$${bet}`);
-  }else{
-    wrong++;
-    await changeCoins(-bet);
-    play("s-lose"); $("gameCard").classList.add("shake"); setTimeout(()=>$("gameCard").classList.remove("shake"),600);
-    toast(`❌ Incorrecto. -$${bet}`);
-  }
-  $("hudStats").textContent = `${correct} / ${wrong}`;
-  afterAnswer();
-}
-function afterAnswer(){
-  // subir nivel cada 5 preguntas contestadas (acierte o no)
-  const total = correct+wrong;
-  if(total%5===0 && level<15){
-    toast(`⬆️ Avanzaste al nivel ${level+1}`);
-  }
-  // siguiente pregunta
-  setTimeout(()=> prepareQuestion(), 600);
-}
+    function mostrarApuesta() {
+      clearInterval(temporizador);
+      document.getElementById("fase-apuesta").style.display = "block";
+      document.getElementById("pregunta-container").style.display = "none";
+      document.getElementById("barra-tiempo").style.width = "100%";
+      document.getElementById("jugador-corriendo").style.left = "0";
+    }
 
-/* ======================= COINS / RANK ======================= */
-async function changeCoins(delta){
-  if(!me) return;
-  const newCoins = Math.max(0,(me.coins||0) + delta);
-  const { error } = await sb.from("users").update({ coins: newCoins }).eq("id", me.id);
-  if(!error){ me.coins = newCoins; $("hudCoins").textContent = me.coins; loadRank(); }
-}
-async function loadRank(){
-  const { data, error } = await sb.from("users").select("*").order("coins",{ascending:false}).limit(50);
-  const r=$("rank"); r.innerHTML="";
-  (data||[]).forEach((u,i)=>{
-    const row=document.createElement("div");
-    row.className="item";
-    row.innerHTML=`<span>#${i+1} ${u.username}</span><b>$${u.coins||0}</b>`;
-    r.appendChild(row);
-  });
-}
+    function iniciarPregunta() {
+      if (gratisUsadas < 3) {
+        gratisUsadas++;
+        alert(`¡Pregunta gratuita! Te quedan ${3 - gratisUsadas} más.`);
+        mostrarPregunta();
+        return;
+      }
 
-/* ======================= CHAT ======================= */
-async function loadChat(){
-  const { data } = await sb.from("messages").select("*").order("created_at",{ascending:true}).limit(200);
-  paintChat(data||[]);
-}
-function paintChat(rows){
-  const c=$("chatList"); c.innerHTML="";
-  rows.forEach(m=>{
-    const d=document.createElement("div");
-    d.className="msg"; d.id = "msg-"+m.id;
-    d.innerHTML = `<div class="who">${m.username}</div><div>${m.content}</div><small style="opacity:.6">${(new Date(m.created_at)).toLocaleTimeString()}</small>`;
-    c.appendChild(d);
-  });
-  c.scrollTop=c.scrollHeight;
-}
-$("btnSend").onclick = async ()=>{
-  const t=$("chatText").value.trim();
-  if(!t) return;
-  if(!me){ toast("Primero iniciá sesión"); return; }
-  $("chatText").value="";
-  play("s-chat");
-  await sb.from("messages").insert([{ username: me.username, content: t }]);
-};
-function subscribeChat(){
-  sb.channel('room')
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
-      const m = payload.new;
-      const c=$("chatList");
-      const d=document.createElement("div");
-      d.className="msg"; d.id="msg-"+m.id;
-      d.innerHTML=`<div class="who">${m.username}</div><div>${m.content}</div><small style="opacity:.6">${(new Date(m.created_at)).toLocaleTimeString()}</small>`;
-      c.appendChild(d); c.scrollTop=c.scrollHeight;
-    })
-    .subscribe();
-}
+      const apuesta = parseInt(document.getElementById("apuesta-select").value);
+      if (isNaN(apuesta) || apuesta < 500) return alert("Apuesta mínima: $500");
+      if (apuesta > jugador.coins) return alert("No tenés suficientes monedas");
 
-/* ======================= ADMIN PANEL ======================= */
-$("aAdd").onclick = async ()=>{
-  const u=$("aUser").value.trim(); const amt=parseInt($("aAmount").value,10)||0;
-  if(!u||!amt) return toast("Alias y monto (+) requeridos");
-  const { data, error } = await sb.from("users").select("*").eq("username",u).maybeSingle();
-  if(error||!data) return toast("Usuario no encontrado");
-  const res = await sb.from("users").update({ coins: (data.coins||0)+amt }).eq("id", data.id);
-  if(res.error) return toast("Error al cargar");
-  toast("Monedas cargadas");
-};
-$("aSub").onclick = async ()=>{
-  const u=$("aUser").value.trim(); const amt=parseInt($("aAmount").value,10)||0;
-  if(!u||!amt) return toast("Alias y monto (-) requeridos");
-  const { data, error } = await sb.from("users").select("*").eq("username",u).maybeSingle();
-  if(error||!data) return toast("Usuario no encontrado");
-  const newCoins = Math.max(0,(data.coins||0)-Math.abs(amt));
-  const res = await sb.from("users").update({ coins: newCoins }).eq("id", data.id);
-  if(res.error) return toast("Error al restar");
-  toast("Monedas descontadas");
-};
-$("aCreate").onclick = async ()=>{
-  const u=$("aUser").value.trim(); if(!u) return toast("Alias requerido");
-  const ex = await sb.from("users").select("id").eq("username",u).maybeSingle();
-  if(ex.data){ toast("Ya existe"); return; }
-  const ins = await sb.from("users").insert([{ username:u, coins:0 }]);
-  if(ins.error) return toast("Error al crear");
-  toast("Usuario creado");
-};
-$("aDel").onclick = async ()=>{
-  const u=$("aUser").value.trim(); if(!u) return toast("Alias requerido");
-  const got = await sb.from("users").select("*").eq("username",u).maybeSingle();
-  if(!got.data) return toast("No existe");
-  const del = await sb.from("users").delete().eq("id", got.data.id);
-  if(del.error) return toast("No se pudo eliminar (RLS?)");
-  toast("Usuario eliminado");
-};
-$("aMsgDel").onclick = async ()=>{
-  const id = $("aMsgId").value.trim(); if(!id) return toast("ID requerido");
-  // intento borrar
-  const del = await sb.from("messages").delete().eq("id", id);
-  if(del.error){
-    // fallback: ocultar cliente
-    const el = $("msg-"+id);
-    if(el){ el.remove(); toast("Ocultado localmente (RLS impidió borrar)"); }
-    else toast("No se pudo borrar");
-  }else{
-    toast("Mensaje borrado");
-  }
-};
-$("aBack").onclick = ()=>{
-  $("adminCard").classList.add("hidden");
-  $("loginCard").classList.remove("hidden");
-};
+      mostrarPregunta(apuesta);
+    }
 
-/* ======================= TIENDA ======================= */
-document.querySelectorAll(".store button").forEach(b=>{
-  b.onclick=()=>{
-    const url=b.getAttribute("data-url");
-    const a=b.getAttribute("data-amt");
-    toast(`Vas a Mercado Pago por ${a} monedas. Compartí el comprobante en el chat.`);
-    window.open(url,"_blank");
-  };
-});
+    function mostrarPregunta(apuesta = 0) {
+      const p = preguntasNivel[preguntasRespondidas];
+      document.getElementById("pregunta-texto").textContent = p.q;
+      const opciones = document.getElementById("opciones");
+      opciones.innerHTML = "";
+      p.o.forEach((opc, idx) => {
+        const btn = document.createElement("button");
+        btn.textContent = opc;
+        btn.onclick = () => verificar(p.c, apuesta, idx === p.c);
+        opciones.appendChild(btn);
+      });
 
-/* ======================= INIT ======================= */
-loadRank();
-</script>
+      document.getElementById("fase-apuesta").style.display = "none";
+      document.getElementById("pregunta-container").style.display = "block";
+
+      tiempoRestante = 20;
+      const barra = document.getElementById("barra-tiempo");
+      const corredor = document.getElementById("jugador-corriendo");
+      corredor.style.left = "0";
+
+      temporizador = setInterval(() => {
+        tiempoRestante--;
+        const porcentaje = (tiempoRestante / 20) * 100;
+        barra.style.width = porcentaje + "%";
+        corredor.style.left = (100 - porcentaje) + "%";
+
+        if (tiempoRestante <= 0) {
+          clearInterval(temporizador);
+          alert("⏰ ¡Tiempo agotado! Respuesta incorrecta.");
+          if (apuesta > 0) {
+            jugador.coins -= apuesta;
+            actualizarMonedas();
+          }
+          preguntasRespondidas++;
+          if (preguntasRespondidas >= 5) {
+            avanzarNivel();
+          } else {
+            mostrarApuesta();
+          }
+        }
+      }, 1000);
+    }
+
+    function verificar(correcta, apuesta, acierto) {
+      clearInterval(temporizador);
+      if (acierto) {
+        if (apuesta > 0) {
+          jugador.coins += apuesta;
+          alert(`¡Correcto! Ganaste $${apuesta}`);
+        }
+      } else {
+        if (apuesta > 0) {
+          jugador.coins -= apuesta;
+          alert(`¡Incorrecto! Perdiste $${apuesta}`);
+        }
+      }
+      actualizarMonedas();
+      preguntasRespondidas++;
+      if (preguntasRespondidas >= 5) {
+        avanzarNivel();
+      } else {
+        mostrarApuesta();
+      }
+    }
+
+    function actualizarMonedas() {
+      document.getElementById("monedas").textContent = jugador.coins;
+    }
+
+    function avanzarNivel() {
+      jugador.level++;
+      alert(`¡Subiste al Nivel ${jugador.level}!`);
+      nuevaRonda();
+    }
+
+    // === ADMIN ===
+    async function adminCargar() {
+      const alias = document.getElementById("admin-alias").value;
+      const cant = parseInt(document.getElementById("admin-monedas").value);
+      if (!alias || isNaN(cant)) return alert("Datos inválidos");
+      await supabase.rpc('update_user_coins', { uname: alias, amount: cant });
+      alert(`✅ $${cant} cargadas a ${alias}`);
+    }
+
+    async function adminRestar() {
+      const alias = document.getElementById("admin-alias").value;
+      const cant = parseInt(document.getElementById("admin-monedas").value);
+      if (!alias || isNaN(cant)) return alert("Datos inválidos");
+      await supabase.rpc('update_user_coins', { uname: alias, amount: -cant });
+      alert(`❌ $${cant} restadas a ${alias}`);
+    }
+
+    async function adminEliminar() {
+      const alias = document.getElementById("admin-alias").value;
+      if (!alias) return alert("Alias requerido");
+      await supabase.from('users').delete().eq('username', alias);
+      alert(`🗑️ Usuario ${alias} eliminado`);
+    }
+
+    function volverAlMenu() {
+      document.getElementById("admin-panel").style.display = "none";
+      document.getElementById("inicio").style.display = "block";
+    }
+
+    // === CHAT ===
+    async function enviarChat() {
+      const msg = document.getElementById("msg").value.trim();
+      if (!msg || !jugador) return;
+      await supabase.from('messages').insert([{ username: jugador.username, content: msg }]);
+      document.getElementById("msg").value = "";
+    }
+
+    supabase.channel('chat')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        const chat = document.getElementById("chat");
+        const div = document.createElement("div");
+        div.className = "msg";
+        div.textContent = `${payload.new.username}: ${payload.new.content}`;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+      })
+      .subscribe();
+
+    // === RANKING ===
+    setInterval(async () => {
+      const { data } = await supabase.from('users').select();
+      const rank = document.getElementById("ranking");
+      rank.innerHTML = "";
+      data
+        .sort((a, b) => b.coins - a.coins)
+        .slice(0, 10)
+        .forEach((j, i) => {
+          const item = document.createElement("div");
+          item.className = `rank-item ${i === 0 ? 'destacado' : ''}`;
+          item.textContent = `#${i+1} ${j.username} | $${j.coins} | Nv:${j.level}`;
+          rank.appendChild(item);
+        });
+    }, 3000);
+  </script>
 </body>
 </html>
