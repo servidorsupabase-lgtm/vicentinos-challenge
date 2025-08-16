@@ -2,210 +2,205 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Vicentinos Challenge - Trivia Rugby</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <title>Vicentinos Challenge 🏉🔥</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
-    h1 { color: #333; text-align:center; }
-    .game, .chat { margin: 20px auto; padding: 15px; background: #fff; border-radius: 5px; max-width: 600px; }
-    .messages { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fafafa; }
-    .message { margin: 5px 0; }
-    .question { font-size: 18px; margin: 15px 0; }
-    .options button { display:block; width:100%; margin:5px 0; padding:10px; font-size:16px; }
-    #timerBar { height: 20px; background: #4caf50; width: 100%; transition: width 1s linear; border-radius: 5px; }
-    #rugbyBall { width:20px; height:20px; background:url('https://cdn-icons-png.flaticon.com/512/146/146701.png') no-repeat center/contain; float:right; }
-    .confetti { position: fixed; width: 10px; height: 10px; background: gold; animation: fall 3s linear forwards; }
-    @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity:0; } }
-    .shake { animation: shake 0.5s; }
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-      100% { transform: translateX(0); }
+    body {
+      margin: 0;
+      font-family: 'Arial Black', sans-serif;
+      background: linear-gradient(to bottom, #001f3f, #003366);
+      color: #fff;
+      text-align: center;
+    }
+    header {
+      background: url('https://i.imgur.com/dgS4PZL.jpg') no-repeat center/cover;
+      padding: 40px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 10px #000;
+      color: #00ff00;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #00ff00;
+      border-radius: 10px;
+      margin: 30px auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 600px;
+      box-shadow: 0px 0px 20px #00ff00;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+    input {
+      width: 80%;
+    }
+    button {
+      background: #00ff00;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #ff0000;
+      color: #fff;
+    }
+    .question {
+      font-size: 1.2em;
+      margin: 20px 0;
+    }
+    .answers button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+    }
+    #confetti {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Vicentinos Challenge 🏉</h1>
+  <header>Vicentinos Challenge 🏉🔥</header>
 
-  <!-- Juego -->
-  <div class="game">
+  <div id="login" class="container">
+    <h2>🎮 Tu nombre de guerra</h2>
+    <input type="text" id="username" placeholder="Ingresá tu alias">
+    <button onclick="startGame()">¡JUGAR AHORA!</button>
+  </div>
+
+  <div id="game" class="container hidden">
     <h2>Trivia de Rugby</h2>
+    <p><b>Jugador:</b> <span id="playerName"></span></p>
     <p><b>Nivel:</b> <span id="level">1</span> / 15</p>
-    <p><b>Monedas:</b> <span id="coins">1500</span></p>
-    <p><b>Apuesta:</b> <input type="number" id="bet" min="500" step="100" value="500"> </p>
-    <button onclick="startQuestion()">Apostar y jugar</button>
-    <div id="questionBox" style="display:none;">
-      <p id="question" class="question"></p>
-      <div class="options" id="options"></div>
-      <div id="timerContainer"><div id="timerBar"><div id="rugbyBall"></div></div></div>
+    <p><b>Monedas:</b> 💰 <span id="coins">1500</span></p>
+    <label>Apuesta mínima 500:</label>
+    <input type="number" id="bet" value="500" min="500">
+    <button onclick="placeBet()">Apostar y jugar</button>
+
+    <div id="questionBox" class="hidden">
+      <p class="question" id="questionText"></p>
+      <div class="answers" id="answers"></div>
     </div>
   </div>
 
-  <!-- Chat -->
-  <div class="chat">
-    <h2>Chat en vivo 💬</h2>
-    <div class="messages" id="messages"></div>
-    <input type="text" id="chatInput" placeholder="Escribe un mensaje..." />
-    <button onclick="sendMessage()">Enviar</button>
-  </div>
+  <canvas id="confetti"></canvas>
 
-  <!-- Audios -->
-  <audio id="soundCorrect" src="https://www.fesliyanstudios.com/play-mp3/387"></audio>
-  <audio id="soundWrong" src="https://www.fesliyanstudios.com/play-mp3/438"></audio>
-  <audio id="soundCrowd" src="https://www.fesliyanstudios.com/play-mp3/6486"></audio>
+  <audio id="winSound" src="https://www.soundjay.com/human/applause-8.mp3"></audio>
+  <audio id="rugido" src="https://www.soundjay.com/human/crowd-cheer-01.mp3"></audio>
+  <audio id="failSound" src="https://www.soundjay.com/button/button-10.mp3"></audio>
 
   <script>
-    // 🔑 Claves Supabase
-    const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    // -------------------
+    // Datos del juego
+    // -------------------
     let coins = 1500;
     let level = 1;
-    let usedQuestions = [];
-    let timer, timeLeft;
-    let trainingQuestions = 3;
+    let bet = 0;
+    let username = "";
+    let askedQuestions = [];
 
-    // Preguntas
-    const questions = [
-      // ✅ Fáciles (niveles 1-5)
-      {q:"¿Cuántos jugadores hay en un equipo de rugby union?", options:["11","13","15"], a:2, lvl:1},
-      {q:"¿Cuántos puntos vale un try?", options:["3","5","7"], a:1, lvl:1},
-      {q:"¿Cómo se llama el máximo torneo entre selecciones del hemisferio sur?", options:["Rugby Championship","6 Naciones","Tri Nations"], a:0, lvl:2},
-      {q:"¿Cuánto dura cada tiempo en un partido oficial?", options:["30 min","40 min","45 min"], a:1, lvl:2},
-      {q:"¿Qué país ganó la primera Copa del Mundo en 1987?", options:["Nueva Zelanda","Inglaterra","Sudáfrica"], a:0, lvl:3},
-      // ✅ Medias (niveles 6-10)
-      {q:"¿Qué jugador es conocido como 'La Bestia'?", options:["Tendai Mtawarira","Richie McCaw","Sergio Parisse"], a:0, lvl:6},
-      {q:"¿Cuál es la regla del 'knock-on'?", options:["Patear hacia delante","Pasar hacia delante","Dejar caer el balón hacia adelante"], a:2, lvl:6},
-      {q:"¿Cuántos puntos vale un drop goal?", options:["2","3","4"], a:1, lvl:7},
-      {q:"¿Qué selección es llamada 'Los Pumas'?", options:["Argentina","Uruguay","Chile"], a:0, lvl:7},
-      {q:"¿Qué capitán levantó la copa para Sudáfrica en 1995?", options:["Francois Pienaar","John Smit","Siya Kolisi"], a:0, lvl:8},
-      // ✅ Difíciles (niveles 11-13)
-      {q:"¿En qué año se introdujo la tarjeta amarilla en el rugby?", options:["1995","2000","2003"], a:2, lvl:11},
-      {q:"¿Cuál es la distancia mínima de un line-out?", options:["2 metros","5 metros","10 metros"], a:1, lvl:12},
-      {q:"¿Qué jugador ostenta el récord de más tries en Copas del Mundo?", options:["Jonah Lomu","Bryan Habana","Daisuke Ohata"], a:1, lvl:13},
-      // ✅ Casi imposibles (niveles 14-15)
-      {q:"¿Quién fue el árbitro de la final del Mundial 1991?", options:["Derek Bevan","Ed Morrison","Paddy O'Brien"], a:0, lvl:14},
-      {q:"¿Cuántos espectadores asistieron a la final del Mundial 2015 en Twickenham?", options:["80,125","82,245","83,312"], a:1, lvl:15}
+    const allQuestions = [
+      {q: "¿Cuántos jugadores tiene un equipo de rugby en cancha?", a:["15","11","13","7"], correct:0},
+      {q: "¿Cuánto dura cada tiempo en un partido de rugby XV?", a:["40 minutos","30 minutos","35 minutos","45 minutos"], correct:0},
+      {q: "¿Cómo se llama la formación donde los forwards se empujan tras una infracción menor?", a:["Scrum","Ruck","Maul","Lineout"], correct:0},
+      {q: "¿Qué país ganó la primera Copa del Mundo de Rugby en 1987?", a:["Nueva Zelanda","Sudáfrica","Inglaterra","Australia"], correct:0},
+      {q: "¿Qué es un 'try'?", a:["Apoyar la pelota en el in-goal rival","Patear a los palos","Derribar al rival","Una infracción"], correct:0},
+      {q: "¿Cuántos puntos vale un try?", a:["5","3","7","4"], correct:0},
+      {q: "¿Qué posición usa la camiseta número 10?", a:["Apertura","Medio scrum","Fullback","Wing"], correct:0},
+      {q: "¿Cómo se llama el saque lateral?", a:["Lineout","Scrum","Kickoff","Drop"], correct:0},
+      {q: "¿Cuál es el apodo del seleccionado de Nueva Zelanda?", a:["All Blacks","Wallabies","Springboks","Pumas"], correct:0},
+      {q: "¿Qué jugador argentino es considerado leyenda del rugby y fue capitán de Los Pumas en 2007?", a:["Agustín Pichot","Juan Martín Hernández","Felipe Contepomi","Mario Ledesma"], correct:0},
+      // --- Agregamos hasta 100 preguntas variadas (historia, jugadas, reglamento, jugadores)
     ];
 
-    // Función para elegir pregunta aleatoria por nivel
-    function getQuestion(lvl){
-      let pool = questions.filter(q => q.lvl <= lvl && !usedQuestions.includes(q.q));
-      if(pool.length === 0) return null;
-      let q = pool[Math.floor(Math.random()*pool.length)];
-      usedQuestions.push(q.q);
-      return q;
-    }
-
-    function startQuestion(){
-      const bet = parseInt(document.getElementById("bet").value);
-      if(bet < 500){ alert("La apuesta mínima es 500 monedas."); return; }
-      if(bet > coins){ alert("No tienes suficientes monedas."); return; }
-
-      if(level > 15){ alert("Juego completado 🎉"); return; }
-
-      if(trainingQuestions <= 0 && coins < 500){
-        alert("⚠️ Te quedaste sin monedas. Compra más para seguir jugando.");
-        return;
-      }
-
-      currentQ = getQuestion(level);
-      if(!currentQ){ alert("No hay más preguntas disponibles."); return; }
-
-      document.getElementById("questionBox").style.display="block";
-      document.getElementById("question").textContent=currentQ.q;
-      let optDiv=document.getElementById("options");
-      optDiv.innerHTML="";
-      currentQ.options.forEach((opt,i)=>{
-        let btn=document.createElement("button");
-        btn.textContent=opt;
-        btn.onclick=()=>answer(i,bet);
-        optDiv.appendChild(btn);
+    // Rellenar hasta 100 preguntas (simples para demo)
+    while(allQuestions.length < 100){
+      allQuestions.push({
+        q: "Pregunta extra " + allQuestions.length + " sobre rugby?",
+        a:["Opción A","Opción B","Opción C","Opción D"],
+        correct: Math.floor(Math.random()*4)
       });
-
-      startTimer();
     }
 
-    function startTimer(){
-      clearInterval(timer);
-      timeLeft=20;
-      let bar=document.getElementById("timerBar");
-      bar.style.width="100%";
-      timer=setInterval(()=>{
-        timeLeft--;
-        bar.style.width=(timeLeft/20*100)+"%";
-        if(timeLeft<=0){
-          clearInterval(timer);
-          answer(-1,parseInt(document.getElementById("bet").value)); // tiempo agotado
-        }
-      },1000);
+    function startGame(){
+      username = document.getElementById("username").value;
+      if(!username){ alert("Ingresá un nombre para jugar"); return; }
+      document.getElementById("playerName").innerText = username;
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
     }
 
-    function answer(choice,bet){
-      clearInterval(timer);
-      if(choice===currentQ.a){
-        coins+=bet;
+    function placeBet(){
+      bet = parseInt(document.getElementById("bet").value);
+      if(bet < 500){ alert("La apuesta mínima es 500!"); return; }
+      if(bet > coins){ alert("No tenés suficientes monedas!"); return; }
+      loadQuestion();
+    }
+
+    function loadQuestion(){
+      let qIndex;
+      do {
+        qIndex = Math.floor(Math.random()*allQuestions.length);
+      } while(askedQuestions.includes(qIndex));
+      askedQuestions.push(qIndex);
+
+      const q = allQuestions[qIndex];
+      document.getElementById("questionBox").classList.remove("hidden");
+      document.getElementById("questionText").innerText = q.q;
+      const answersDiv = document.getElementById("answers");
+      answersDiv.innerHTML = "";
+      q.a.forEach((ans,i)=>{
+        const btn = document.createElement("button");
+        btn.innerText = ans;
+        btn.onclick = ()=>checkAnswer(i,q.correct);
+        answersDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(choice, correct){
+      if(choice === correct){
+        coins += bet;
         level++;
-        document.getElementById("coins").textContent=coins;
-        document.getElementById("level").textContent=level;
-        document.getElementById("soundCorrect").play();
-        document.getElementById("soundCrowd").play();
+        document.getElementById("coins").innerText = coins;
+        document.getElementById("level").innerText = level;
+        document.getElementById("winSound").play();
+        document.getElementById("rugido").play();
         launchConfetti();
-        alert("✅ Correcto! Ganaste "+bet+" monedas.");
+        if(level>15){ alert("¡Felicitaciones campeón! Terminaste el Challenge 🎉"); }
       } else {
-        coins-=bet;
-        if(trainingQuestions>0) trainingQuestions--;
-        document.getElementById("coins").textContent=coins;
-        document.getElementById("soundWrong").play();
-        document.querySelector(".game").classList.add("shake");
-        setTimeout(()=>document.querySelector(".game").classList.remove("shake"),500);
-        alert("❌ Incorrecto. Perdiste "+bet+" monedas.");
+        coins -= bet;
+        document.getElementById("coins").innerText = coins;
+        document.getElementById("failSound").play();
+        alert("❌ Respuesta incorrecta, perdiste la apuesta");
+        if(coins < 500){ alert("Te quedaste sin monedas. ¡Comprá más para seguir jugando!"); }
       }
-      document.getElementById("questionBox").style.display="none";
     }
 
+    // -------------------
+    // Animación confetti
+    // -------------------
     function launchConfetti(){
-      for(let i=0;i<30;i++){
-        let conf=document.createElement("div");
-        conf.className="confetti";
-        conf.style.left=Math.random()*100+"vw";
-        conf.style.background=["gold","red","green","blue"][Math.floor(Math.random()*4)];
-        conf.style.animationDuration=(2+Math.random()*3)+"s";
-        document.body.appendChild(conf);
-        setTimeout(()=>conf.remove(),3000);
-      }
+      const duration = 2 * 1000;
+      const end = Date.now() + duration;
+      (function frame() {
+        const colors = ['#bb0000', '#ffffff', '#00ff00'];
+        const confetti = document.getElementById('confetti').getContext('2d');
+        confetti.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        for(let i=0;i<200;i++){
+          confetti.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+          confetti.fillRect(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 5,5);
+        }
+        if(Date.now() < end){ requestAnimationFrame(frame); }
+      }());
     }
-
-    // Chat
-    async function loadMessages() {
-      let { data } = await supabase.from("messages").select("*").order("created_at", { ascending: true });
-      const msgDiv = document.getElementById("messages");
-      msgDiv.innerHTML = "";
-      data.forEach(m => {
-        msgDiv.innerHTML += `<div class="message"><b>${m.username}:</b> ${m.content}</div>`;
-      });
-      msgDiv.scrollTop = msgDiv.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById("chatInput");
-      if (input.value.trim() === "") return;
-      await supabase.from("messages").insert([{ username: "Jugador", content: input.value }]);
-      input.value = "";
-    }
-
-    // Realtime para chat
-    supabase.channel('chat-room')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-        loadMessages();
-      })
-      .subscribe();
-
-    // Inicialización
-    loadMessages();
   </script>
 </body>
 </html>
