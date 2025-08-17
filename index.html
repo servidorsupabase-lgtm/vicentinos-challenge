@@ -8,213 +8,277 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      background: #001a33;
+      background: #003366;
       color: #0f0;
+      min-height: 100vh;
       font-family: 'Inter', sans-serif;
-      margin: 0; padding: 0;
-      display: flex; flex-direction: column; align-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    h1, h2 { color: #0f0; }
     .box {
-      background: #000; border: 1px solid #0f0; border-radius: 8px;
-      padding: 16px; margin: 12px; width: 90%; max-width: 500px;
+      background: #000;
+      padding: 20px;
+      margin: 15px;
+      border: 2px solid #0f0;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
     }
-    input, button {
-      padding: 8px; margin: 6px 0; width: 100%;
-      border-radius: 4px; border: none;
+    input, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
     }
-    button { background: #0f0; color: #000; font-weight: bold; cursor: pointer; }
-    button:hover { background: #9f9; }
-    #chatBox { max-height: 200px; overflow-y: auto; background: #111; padding: 8px; border: 1px solid #0f0; }
-    .msg { border-bottom: 1px solid #033; padding: 4px 0; }
-    .msg small { color: #999; }
-    #adminPanel { display: none; background: #111; }
+    button {
+      background: #0f0;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.8; }
+    #messages {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #111;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .msg { margin: 5px 0; }
+    .timestamp { color: #888; font-size: 0.8em; }
   </style>
 </head>
 <body>
-  <h1>🏈 Vicentinos Challenge</h1>
+  <h1>Vicentinos Challenge 🏈</h1>
 
-  <!-- LOGIN / REGISTRO -->
+  <!-- LOGIN -->
   <div class="box" id="loginBox">
-      <!-- BOTÓN SALIR -->
+    <h2>🎮 Tu nombre de guerra</h2>
+    <input type="text" id="usernameInput" placeholder="Escribe tu alias..." />
+    <button onclick="login()">¡JUGAR AHORA!</button>
+  </div>
+
+  <!-- BOTÓN MENÚ PRINCIPAL -->
   <div class="box" id="menuBox" style="display:none;">
     <button onclick="logout()">⬅️ Menú Principal</button>
-  </div>
-    
-    <h2>Tu nombre de guerra</h2>
-    <input type="text" id="usernameInput" placeholder="Alias..." />
-    <button onclick="login()">¡JUGAR AHORA!</button>
   </div>
 
   <!-- CHAT -->
   <div class="box" id="chatSection" style="display:none;">
     <h2>💬 Chat del Estadio</h2>
-    <div id="chatBox"></div>
-    <input type="text" id="chatInput" placeholder="Escribe un mensaje..." />
+    <div id="messages"></div>
+    <textarea id="messageInput" placeholder="Escribe un mensaje..."></textarea>
     <button onclick="sendMessage()">Enviar</button>
   </div>
 
   <!-- RANKING -->
   <div class="box" id="rankingSection" style="display:none;">
     <h2>🏆 Ranking</h2>
-    <div id="rankingBox"></div>
+    <div id="ranking"></div>
   </div>
 
-  <!-- PANEL ADMIN -->
-  <div class="box" id="adminPanel">
+  <!-- ADMIN PANEL -->
+  <div class="box" id="adminPanel" style="display:none;">
     <h2>⚙️ Panel de Admin</h2>
 
-    <h3>Crear usuario</h3>
-    <input type="text" id="newUser" placeholder="Alias nuevo..." />
-    <button onclick="createUser()">Crear</button>
+    <h3>Cargar monedas</h3>
+    <input type="text" id="adminUserCoins" placeholder="Alias usuario" />
+    <input type="number" id="adminCoins" placeholder="Cantidad de monedas" />
+    <button onclick="addCoins()">Cargar</button>
 
-    <h3>Cargar / Restar monedas</h3>
-    <input type="text" id="coinUser" placeholder="Alias usuario..." />
-    <input type="number" id="coinAmount" placeholder="Cantidad (+ o -)" />
-    <button onclick="updateCoins()">Aplicar</button>
+    <h3>Restar monedas</h3>
+    <input type="text" id="adminUserRemove" placeholder="Alias usuario" />
+    <input type="number" id="adminCoinsRemove" placeholder="Cantidad a restar" />
+    <button onclick="removeCoins()">Restar</button>
 
-    <h3>Eliminar mensajes de usuario</h3>
-    <input type="text" id="deleteUser" placeholder="Alias usuario..." />
-    <button onclick="deleteMessages()">Borrar mensajes</button>
+    <h3>Eliminar mensajes</h3>
+    <input type="text" id="adminDeleteUser" placeholder="Alias usuario" />
+    <button onclick="deleteMessages()">Eliminar mensajes</button>
+
+    <h3>Bloquear usuario</h3>
+    <input type="text" id="adminBlockUser" placeholder="Alias usuario" />
+    <button onclick="blockUser()">Bloquear</button>
   </div>
 
-  <script>
-    // Conexión Supabase
-    const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+  const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
+  const ADMIN_TOKEN = "20250819802006";
 
-    let currentUser = null;
-    const ADMIN_TOKEN = "20250819802006";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // LOGIN
-    async function login() {
-      const username = document.getElementById("usernameInput").value.trim();
-      if (!username) return alert("Ingresá un alias");
+  let currentUser = null;
 
-      if (username === ADMIN_TOKEN) {
-        currentUser = { username: "admin", role: "admin" };
-        document.getElementById("adminPanel").style.display = "block";
-        document.getElementById("chatSection").style.display = "block";
-        document.getElementById("rankingSection").style.display = "block";
-        loadChat();
-        loadRanking();
-        return;
-      }
+  // LOGIN
+  async function login() {
+    const username = document.getElementById("usernameInput").value.trim();
+    if (!username) return alert("Escribe un alias");
 
-      // Si no existe el usuario, lo crea
-      const { error } = await supabase
-        .from("users")
-        .upsert([{ username }]);
-
-      if (error) {
-        console.error(error);
-        return alert("Error al registrar usuario");
-      }
-
-      currentUser = { username, role: "user" };
+    // ADMIN LOGIN
+    if (username === ADMIN_TOKEN) {
+      currentUser = { username: "admin", isAdmin: true };
+      document.getElementById("loginBox").style.display = "none";
       document.getElementById("chatSection").style.display = "block";
       document.getElementById("rankingSection").style.display = "block";
-      loadChat();
+      document.getElementById("adminPanel").style.display = "block";
+      document.getElementById("menuBox").style.display = "block";
+      loadMessages();
+      loadRanking();
+      return;
+    }
+
+    // USER LOGIN
+    const { data, error } = await supabase
+      .from("users")
+      .upsert([{ username, coins: 0 }], { onConflict: "username" })
+      .select();
+
+    if (error) {
+      console.error(error);
+      alert("Error al registrar usuario");
+      return;
+    }
+
+    currentUser = data[0];
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("chatSection").style.display = "block";
+    document.getElementById("rankingSection").style.display = "block";
+    document.getElementById("menuBox").style.display = "block";
+    loadMessages();
+    loadRanking();
+  }
+
+  // LOGOUT
+  function logout() {
+    currentUser = null;
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("chatSection").style.display = "none";
+    document.getElementById("rankingSection").style.display = "none";
+    document.getElementById("adminPanel").style.display = "none";
+    document.getElementById("menuBox").style.display = "none";
+  }
+
+  // SEND MESSAGE
+  async function sendMessage() {
+    if (!currentUser || currentUser.isAdmin) return;
+    const content = document.getElementById("messageInput").value.trim();
+    if (!content) return;
+
+    const { error } = await supabase.from("chat_messages").insert([
+      { username: currentUser.username, message: content }
+    ]);
+
+    if (error) {
+      console.error(error);
+      alert("Error al enviar mensaje");
+      return;
+    }
+    document.getElementById("messageInput").value = "";
+    loadMessages();
+  }
+
+  // LOAD MESSAGES
+  async function loadMessages() {
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+    data.reverse().forEach(msg => {
+      messagesDiv.innerHTML += `
+        <div class="msg">
+          <b>${msg.username}</b>: ${msg.message}
+          <span class="timestamp">(${new Date(msg.created_at).toLocaleString()})</span>
+        </div>`;
+    });
+  }
+
+  // LOAD RANKING
+  async function loadRanking() {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .order("coins", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const rankingDiv = document.getElementById("ranking");
+    rankingDiv.innerHTML = "";
+    data.forEach((user, i) => {
+      rankingDiv.innerHTML += `<div>#${i+1} ${user.username} | ${user.coins} monedas</div>`;
+    });
+  }
+
+  // ADMIN: CARGAR MONEDAS
+  async function addCoins() {
+    const username = document.getElementById("adminUserCoins").value.trim();
+    const coins = parseInt(document.getElementById("adminCoins").value);
+    if (!username || isNaN(coins)) return alert("Datos inválidos");
+
+    const { error } = await supabase.rpc("increment_coins", { p_username: username, p_amount: coins });
+    if (error) { console.error(error); alert("Error"); return; }
+    loadRanking();
+    alert("Monedas cargadas");
+  }
+
+  // ADMIN: RESTAR MONEDAS
+  async function removeCoins() {
+    const username = document.getElementById("adminUserRemove").value.trim();
+    const coins = parseInt(document.getElementById("adminCoinsRemove").value);
+    if (!username || isNaN(coins)) return alert("Datos inválidos");
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({ coins: supabase.sql`GREATEST(coins - ${coins}, 0)` })
+      .eq("username", username);
+
+    if (error) { console.error(error); alert("Error"); return; }
+    loadRanking();
+    alert("Monedas restadas");
+  }
+
+  // ADMIN: ELIMINAR MENSAJES
+  async function deleteMessages() {
+    const username = document.getElementById("adminDeleteUser").value.trim();
+    if (!username) return alert("Falta alias");
+
+    const { error } = await supabase.from("chat_messages").delete().eq("username", username);
+    if (error) { console.error(error); alert("Error"); return; }
+    loadMessages();
+    alert("Mensajes borrados");
+  }
+
+  // ADMIN: BLOQUEAR USUARIO
+  async function blockUser() {
+    const username = document.getElementById("adminBlockUser").value.trim();
+    if (!username) return alert("Falta alias");
+
+    const { error } = await supabase.from("users").update({ blocked: true }).eq("username", username);
+    if (error) { console.error(error); alert("Error"); return; }
+    alert("Usuario bloqueado");
+  }
+
+  // AUTO REFRESH
+  setInterval(() => {
+    if (currentUser) {
+      loadMessages();
       loadRanking();
     }
-
-    // ENVIAR MENSAJE
-    async function sendMessage() {
-      const msg = document.getElementById("chatInput").value.trim();
-      if (!msg || !currentUser) return;
-
-      const { error } = await supabase
-        .from("chat_messages")
-        .insert([{ username: currentUser.username, message: msg }]);
-
-      if (error) {
-        console.error(error);
-        return alert("Error al enviar mensaje");
-      }
-      document.getElementById("chatInput").value = "";
-      loadChat();
-    }
-
-    // CARGAR CHAT
-    async function loadChat() {
-      const { data, error } = await supabase
-        .from("chat_messages")
-        .select("username, message, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (error) return console.error(error);
-
-      const chatBox = document.getElementById("chatBox");
-      chatBox.innerHTML = "";
-      data.reverse().forEach(row => {
-        const div = document.createElement("div");
-        div.className = "msg";
-        div.innerHTML = `<strong>${row.username}:</strong> ${row.message} <br><small>${new Date(row.created_at).toLocaleString()}</small>`;
-        chatBox.appendChild(div);
-      });
-    }
-
-    // RANKING
-    async function loadRanking() {
-      const { data, error } = await supabase
-        .from("users")
-        .select("username, coins")
-        .order("coins", { ascending: false });
-
-      if (error) return console.error(error);
-
-      const box = document.getElementById("rankingBox");
-      box.innerHTML = "";
-      data.forEach((u, i) => {
-        const div = document.createElement("div");
-        div.textContent = `#${i+1} ${u.username} | ${u.coins} monedas`;
-        box.appendChild(div);
-      });
-    }
-
-    // ADMIN: CREAR USUARIO
-    async function createUser() {
-      const username = document.getElementById("newUser").value.trim();
-      if (!username) return alert("Alias requerido");
-
-      const { error } = await supabase
-        .from("users")
-        .insert([{ username }]);
-
-      if (error) return alert("Error al crear usuario");
-      alert("Usuario creado");
-      loadRanking();
-    }
-
-    // ADMIN: MODIFICAR MONEDAS
-    async function updateCoins() {
-      const username = document.getElementById("coinUser").value.trim();
-      const amount = parseInt(document.getElementById("coinAmount").value);
-      if (!username || isNaN(amount)) return alert("Datos inválidos");
-
-      const { error } = await supabase.rpc("increment_coins", { p_username: username, p_amount: amount });
-
-      if (error) return alert("Error al modificar monedas");
-      alert("Monedas actualizadas");
-      loadRanking();
-    }
-
-    // ADMIN: ELIMINAR MENSAJES
-    async function deleteMessages() {
-      const username = document.getElementById("deleteUser").value.trim();
-      if (!username) return alert("Alias requerido");
-
-      const { error } = await supabase
-        .from("chat_messages")
-        .delete()
-        .eq("username", username);
-
-      if (error) return alert("Error al borrar mensajes");
-      alert("Mensajes borrados");
-      loadChat();
-    }
-  </script>
+  }, 5000);
+</script>
 </body>
 </html>
