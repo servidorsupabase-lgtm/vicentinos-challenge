@@ -1,284 +1,376 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vicentinos Challenge 🏈</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <title>Rugby Preguntados</title>
   <style>
     body {
-      background: #003366;
-      color: #0f0;
-      min-height: 100vh;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #00c3ff, #ffff1c);
+      margin: 0;
+      padding: 0;
+      text-align: center;
     }
-    .box {
-      background: #000;
-      padding: 20px;
-      margin: 15px;
-      border: 2px solid #0f0;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 600px;
-    }
-    input, button, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: none;
+    h1 {
+      color: #222;
+      animation: pulse 2s infinite;
     }
     button {
-      background: #0f0;
-      color: #000;
-      font-weight: bold;
+      background: #ff4081;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
+      transition: 0.3s;
     }
-    button:hover { opacity: 0.8; }
-    #messages {
-      max-height: 200px;
+    button:hover {
+      transform: scale(1.1);
+      background: #e91e63;
+    }
+    #game, #adminPanel, #mainMenu, #ranking, #chat, #packs {
+      display: none;
+      margin: 20px;
+    }
+    .question {
+      font-size: 22px;
+      margin: 20px;
+      animation: fadeIn 1s;
+    }
+    .option {
+      display: block;
+      background: #fff;
+      margin: 10px auto;
+      padding: 15px;
+      width: 60%;
+      border: 2px solid #222;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .option:hover {
+      background: #f0f0f0;
+      transform: scale(1.05);
+    }
+    #timer {
+      font-size: 20px;
+      margin: 10px;
+      animation: shake 1s infinite;
+    }
+    #chatMessages {
+      border: 1px solid #ccc;
+      height: 200px;
       overflow-y: auto;
-      background: #111;
-      padding: 10px;
-      border-radius: 6px;
+      padding: 5px;
+      text-align: left;
+      background: #fff;
     }
-    .msg { margin: 5px 0; }
-    .timestamp { color: #888; font-size: 0.8em; }
+    .chat-msg {
+      margin: 5px 0;
+    }
+    .chat-time {
+      font-size: 11px;
+      color: gray;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes shake {
+      0% { transform: translateX(0px); }
+      25% { transform: translateX(-2px); }
+      50% { transform: translateX(2px); }
+      75% { transform: translateX(-2px); }
+      100% { transform: translateX(0px); }
+    }
   </style>
 </head>
 <body>
-  <h1>Vicentinos Challenge 🏈</h1>
+  <h1>🏉 Rugby Preguntados</h1>
 
   <!-- LOGIN -->
-  <div class="box" id="loginBox">
-    <h2>🎮 Tu nombre de guerra</h2>
-    <input type="text" id="usernameInput" placeholder="Escribe tu alias..." />
-    <button onclick="login()">¡JUGAR AHORA!</button>
+  <div id="login">
+    <h2>Ingresá con tu alias</h2>
+    <input type="text" id="username" placeholder="Tu alias">
+    <button onclick="login()">Entrar</button>
   </div>
 
-  <!-- BOTÓN MENÚ PRINCIPAL -->
-  <div class="box" id="menuBox" style="display:none;">
-    <button onclick="logout()">⬅️ Menú Principal</button>
+  <!-- MENÚ PRINCIPAL -->
+  <div id="mainMenu">
+    <h2>Bienvenido <span id="playerName"></span> (Monedas: <span id="playerCoins">0</span>)</h2>
+    <button onclick="showGame()">🎮 Jugar</button>
+    <button onclick="showRanking()">🏆 Ranking</button>
+    <button onclick="showChat()">💬 Chat</button>
+    <button onclick="showPacks()">💰 Comprar Monedas</button>
+    <button onclick="logout()">🚪 Salir</button>
+    <div id="adminBtn"></div>
   </div>
 
-  <!-- CHAT -->
-  <div class="box" id="chatSection" style="display:none;">
-    <h2>💬 Chat del Estadio</h2>
-    <div id="messages"></div>
-    <textarea id="messageInput" placeholder="Escribe un mensaje..."></textarea>
-    <button onclick="sendMessage()">Enviar</button>
+  <!-- JUEGO -->
+  <div id="game">
+    <h2>Ronda <span id="currentLevel"></span></h2>
+    <div id="betSection">
+      <p>¿Cuántas monedas querés apostar? (mínimo 500)</p>
+      <input type="number" id="betAmount" value="500">
+      <button onclick="startQuestion()">Apostar y jugar</button>
+    </div>
+    <div id="questionSection" style="display:none;">
+      <div id="timer">20</div>
+      <div class="question" id="questionText"></div>
+      <div id="options"></div>
+    </div>
+    <button onclick="goMainMenu()">⬅️ Menú Principal</button>
   </div>
 
   <!-- RANKING -->
-  <div class="box" id="rankingSection" style="display:none;">
-    <h2>🏆 Ranking</h2>
-    <div id="ranking"></div>
+  <div id="ranking">
+    <h2>Ranking</h2>
+    <ul id="rankingList"></ul>
+    <button onclick="goMainMenu()">⬅️ Menú Principal</button>
   </div>
 
-  <!-- ADMIN PANEL -->
-  <div class="box" id="adminPanel" style="display:none;">
-    <h2>⚙️ Panel de Admin</h2>
-
-    <h3>Cargar monedas</h3>
-    <input type="text" id="adminUserCoins" placeholder="Alias usuario" />
-    <input type="number" id="adminCoins" placeholder="Cantidad de monedas" />
-    <button onclick="addCoins()">Cargar</button>
-
-    <h3>Restar monedas</h3>
-    <input type="text" id="adminUserRemove" placeholder="Alias usuario" />
-    <input type="number" id="adminCoinsRemove" placeholder="Cantidad a restar" />
-    <button onclick="removeCoins()">Restar</button>
-
-    <h3>Eliminar mensajes</h3>
-    <input type="text" id="adminDeleteUser" placeholder="Alias usuario" />
-    <button onclick="deleteMessages()">Eliminar mensajes</button>
-
-    <h3>Bloquear usuario</h3>
-    <input type="text" id="adminBlockUser" placeholder="Alias usuario" />
-    <button onclick="blockUser()">Bloquear</button>
+  <!-- CHAT -->
+  <div id="chat">
+    <h2>Chat</h2>
+    <div id="chatMessages"></div>
+    <input type="text" id="chatInput" placeholder="Escribí tu mensaje">
+    <button onclick="sendChat()">Enviar</button>
+    <button onclick="goMainMenu()">⬅️ Menú Principal</button>
   </div>
 
-<script>
-  const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-  const ADMIN_TOKEN = "20250819802006";
+  <!-- PACKS DE MONEDAS -->
+  <div id="packs">
+    <h2>Comprar Monedas</h2>
+    <button onclick="buyCoins(1000)">Comprar 1000 monedas</button>
+    <button onclick="buyCoins(5000)">Comprar 5000 monedas</button>
+    <button onclick="buyCoins(10000)">Comprar 10000 monedas</button>
+    <button onclick="goMainMenu()">⬅️ Menú Principal</button>
+  </div>
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- ADMIN -->
+  <div id="adminPanel">
+    <h2>Panel de Admin</h2>
+    <input type="text" id="targetUser" placeholder="Alias del usuario">
+    <input type="number" id="coinAmount" placeholder="Cantidad de monedas">
+    <button onclick="adminAddCoins()">Cargar monedas</button>
+    <button onclick="adminRemoveCoins()">Restar monedas</button>
+    <button onclick="adminBlockUser()">Bloquear usuario</button>
+    <input type="text" id="deleteUserChat" placeholder="Alias para borrar chat">
+    <button onclick="adminDeleteChat()">Eliminar mensajes</button>
+    <button onclick="goMainMenu()">⬅️ Menú Principal</button>
+  </div>
 
-  let currentUser = null;
+  <!-- AUDIOS -->
+  <audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+  <audio id="levelSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
-  // LOGIN
-  async function login() {
-    const username = document.getElementById("usernameInput").value.trim();
-    if (!username) return alert("Escribe un alias");
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // ADMIN LOGIN
-    if (username === ADMIN_TOKEN) {
-      currentUser = { username: "admin", isAdmin: true };
-      document.getElementById("loginBox").style.display = "none";
-      document.getElementById("chatSection").style.display = "block";
-      document.getElementById("rankingSection").style.display = "block";
+    let currentUser = null;
+    let currentLevel = 1;
+    let currentQuestion = null;
+    let timerInterval = null;
+
+    async function login() {
+      const username = document.getElementById("username").value;
+      if (!username) return alert("Ingresá tu alias");
+
+      let { data: user, error } = await supabaseClient
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .single();
+
+      if (!user) {
+        let { data, error } = await supabaseClient
+          .from("users")
+          .insert({ username, coins: 1000 })
+          .select()
+          .single();
+        user = data;
+      }
+
+      currentUser = user;
+      document.getElementById("login").style.display = "none";
+      document.getElementById("mainMenu").style.display = "block";
+      document.getElementById("playerName").innerText = user.username;
+      document.getElementById("playerCoins").innerText = user.coins;
+
+      if (username === "20250819802006") {
+        document.getElementById("adminBtn").innerHTML = '<button onclick="showAdmin()">⚙️ Admin</button>';
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("login").style.display = "block";
+    }
+
+    function goMainMenu() {
+      document.querySelectorAll("#game,#ranking,#chat,#packs,#adminPanel").forEach(d => d.style.display = "none");
+      document.getElementById("mainMenu").style.display = "block";
+    }
+
+    function showGame() {
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("game").style.display = "block";
+      document.getElementById("currentLevel").innerText = currentLevel;
+    }
+
+    async function startQuestion() {
+      const bet = parseInt(document.getElementById("betAmount").value);
+      if (bet < 500) return alert("La apuesta mínima es 500");
+      if (bet > currentUser.coins) return alert("No tenés suficientes monedas");
+
+      let { data: q } = await supabaseClient
+        .from("questions")
+        .select("*")
+        .eq("level", currentLevel)
+        .order("random()")
+        .limit(1);
+
+      if (!q || q.length === 0) return alert("No hay preguntas");
+
+      currentQuestion = q[0];
+      document.getElementById("betSection").style.display = "none";
+      document.getElementById("questionSection").style.display = "block";
+      document.getElementById("questionText").innerText = currentQuestion.question;
+
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      ["A","B","C"].forEach(opt => {
+        let btn = document.createElement("div");
+        btn.className = "option";
+        btn.innerText = currentQuestion["option_" + opt.toLowerCase()];
+        btn.onclick = () => answerQuestion(opt, bet);
+        optionsDiv.appendChild(btn);
+      });
+
+      let timeLeft = 20;
+      document.getElementById("timer").innerText = timeLeft;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerText = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          answerQuestion(null, bet);
+        }
+      }, 1000);
+    }
+
+    async function answerQuestion(option, bet) {
+      clearInterval(timerInterval);
+      let correct = (option === currentQuestion.correct_option);
+      if (correct) {
+        document.getElementById("correctSound").play();
+        await supabaseClient.rpc("increment_coins", { p_username: currentUser.username, p_amount: bet });
+        alert("¡Correcto! Ganaste " + bet + " monedas");
+        currentLevel++;
+      } else {
+        document.getElementById("wrongSound").play();
+        await supabaseClient.rpc("increment_coins", { p_username: currentUser.username, p_amount: -bet });
+        alert("Incorrecto o sin tiempo. Perdiste " + bet + " monedas");
+      }
+      goMainMenu();
+    }
+
+    async function showRanking() {
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("ranking").style.display = "block";
+      let { data: users } = await supabaseClient.from("users").select("*").order("coins", { ascending: false }).limit(10);
+      const ul = document.getElementById("rankingList");
+      ul.innerHTML = "";
+      users.forEach(u => {
+        let li = document.createElement("li");
+        li.innerText = `${u.username}: ${u.coins} monedas`;
+        ul.appendChild(li);
+      });
+    }
+
+    async function showChat() {
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("chat").style.display = "block";
+      loadChat();
+    }
+
+    async function loadChat() {
+      let { data: msgs } = await supabaseClient.from("chat").select("*, users(username)").order("created_at", { ascending: true });
+      const chatDiv = document.getElementById("chatMessages");
+      chatDiv.innerHTML = "";
+      msgs.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "chat-msg";
+        div.innerHTML = `<b>${m.users.username}</b>: ${m.message} <span class="chat-time">(${new Date(m.created_at).toLocaleTimeString()})</span>`;
+        chatDiv.appendChild(div);
+      });
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    async function sendChat() {
+      const msg = document.getElementById("chatInput").value;
+      if (!msg) return;
+      await supabaseClient.from("chat").insert({ user_id: currentUser.id, message: msg });
+      document.getElementById("chatInput").value = "";
+      loadChat();
+    }
+
+    function showPacks() {
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("packs").style.display = "block";
+    }
+
+    async function buyCoins(amount) {
+      await supabaseClient.rpc("increment_coins", { p_username: currentUser.username, p_amount: amount });
+      alert("Compraste " + amount + " monedas");
+      goMainMenu();
+    }
+
+    function showAdmin() {
+      document.getElementById("mainMenu").style.display = "none";
       document.getElementById("adminPanel").style.display = "block";
-      document.getElementById("menuBox").style.display = "block";
-      loadMessages();
-      loadRanking();
-      return;
     }
 
-    // USER LOGIN
-    const { data, error } = await supabase
-      .from("users")
-      .upsert([{ username, coins: 0 }], { onConflict: "username" })
-      .select();
-
-    if (error) {
-      console.error(error);
-      alert("Error al registrar usuario");
-      return;
+    async function adminAddCoins() {
+      const user = document.getElementById("targetUser").value;
+      const amount = parseInt(document.getElementById("coinAmount").value);
+      await supabaseClient.rpc("increment_coins", { p_username: user, p_amount: amount });
+      alert("Monedas cargadas");
     }
 
-    currentUser = data[0];
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("chatSection").style.display = "block";
-    document.getElementById("rankingSection").style.display = "block";
-    document.getElementById("menuBox").style.display = "block";
-    loadMessages();
-    loadRanking();
-  }
-
-  // LOGOUT
-  function logout() {
-    currentUser = null;
-    document.getElementById("loginBox").style.display = "block";
-    document.getElementById("chatSection").style.display = "none";
-    document.getElementById("rankingSection").style.display = "none";
-    document.getElementById("adminPanel").style.display = "none";
-    document.getElementById("menuBox").style.display = "none";
-  }
-
-  // SEND MESSAGE
-  async function sendMessage() {
-    if (!currentUser || currentUser.isAdmin) return;
-    const content = document.getElementById("messageInput").value.trim();
-    if (!content) return;
-
-    const { error } = await supabase.from("chat_messages").insert([
-      { username: currentUser.username, message: content }
-    ]);
-
-    if (error) {
-      console.error(error);
-      alert("Error al enviar mensaje");
-      return;
-    }
-    document.getElementById("messageInput").value = "";
-    loadMessages();
-  }
-
-  // LOAD MESSAGES
-  async function loadMessages() {
-    const { data, error } = await supabase
-      .from("chat_messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    if (error) {
-      console.error(error);
-      return;
+    async function adminRemoveCoins() {
+      const user = document.getElementById("targetUser").value;
+      const amount = parseInt(document.getElementById("coinAmount").value);
+      await supabaseClient.rpc("increment_coins", { p_username: user, p_amount: -amount });
+      alert("Monedas restadas");
     }
 
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
-    data.reverse().forEach(msg => {
-      messagesDiv.innerHTML += `
-        <div class="msg">
-          <b>${msg.username}</b>: ${msg.message}
-          <span class="timestamp">(${new Date(msg.created_at).toLocaleString()})</span>
-        </div>`;
-    });
-  }
-
-  // LOAD RANKING
-  async function loadRanking() {
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .order("coins", { ascending: false })
-      .limit(10);
-
-    if (error) {
-      console.error(error);
-      return;
+    async function adminBlockUser() {
+      const user = document.getElementById("targetUser").value;
+      await supabaseClient.from("users").update({ blocked: true }).eq("username", user);
+      alert("Usuario bloqueado");
     }
 
-    const rankingDiv = document.getElementById("ranking");
-    rankingDiv.innerHTML = "";
-    data.forEach((user, i) => {
-      rankingDiv.innerHTML += `<div>#${i+1} ${user.username} | ${user.coins} monedas</div>`;
-    });
-  }
-
-  // ADMIN: CARGAR MONEDAS
-  async function addCoins() {
-    const username = document.getElementById("adminUserCoins").value.trim();
-    const coins = parseInt(document.getElementById("adminCoins").value);
-    if (!username || isNaN(coins)) return alert("Datos inválidos");
-
-    const { error } = await supabase.rpc("increment_coins", { p_username: username, p_amount: coins });
-    if (error) { console.error(error); alert("Error"); return; }
-    loadRanking();
-    alert("Monedas cargadas");
-  }
-
-  // ADMIN: RESTAR MONEDAS
-  async function removeCoins() {
-    const username = document.getElementById("adminUserRemove").value.trim();
-    const coins = parseInt(document.getElementById("adminCoinsRemove").value);
-    if (!username || isNaN(coins)) return alert("Datos inválidos");
-
-    const { data, error } = await supabase
-      .from("users")
-      .update({ coins: supabase.sql`GREATEST(coins - ${coins}, 0)` })
-      .eq("username", username);
-
-    if (error) { console.error(error); alert("Error"); return; }
-    loadRanking();
-    alert("Monedas restadas");
-  }
-
-  // ADMIN: ELIMINAR MENSAJES
-  async function deleteMessages() {
-    const username = document.getElementById("adminDeleteUser").value.trim();
-    if (!username) return alert("Falta alias");
-
-    const { error } = await supabase.from("chat_messages").delete().eq("username", username);
-    if (error) { console.error(error); alert("Error"); return; }
-    loadMessages();
-    alert("Mensajes borrados");
-  }
-
-  // ADMIN: BLOQUEAR USUARIO
-  async function blockUser() {
-    const username = document.getElementById("adminBlockUser").value.trim();
-    if (!username) return alert("Falta alias");
-
-    const { error } = await supabase.from("users").update({ blocked: true }).eq("username", username);
-    if (error) { console.error(error); alert("Error"); return; }
-    alert("Usuario bloqueado");
-  }
-
-  // AUTO REFRESH
-  setInterval(() => {
-    if (currentUser) {
-      loadMessages();
-      loadRanking();
+    async function adminDeleteChat() {
+      const user = document.getElementById("deleteUserChat").value;
+      let { data: u } = await supabaseClient.from("users").select("id").eq("username", user).single();
+      if (u) {
+        await supabaseClient.from("chat").delete().eq("user_id", u.id);
+        alert("Mensajes borrados");
+      }
     }
-  }, 5000);
-</script>
+  </script>
 </body>
 </html>
