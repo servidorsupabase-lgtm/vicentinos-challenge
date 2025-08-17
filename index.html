@@ -2,388 +2,303 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Rugby Preguntados</title>
+  <title>Vicentinos Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Fuente y estilo -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: radial-gradient(circle, #3b82f6, #1e3a8a);
+      font-family: 'Fredoka One', cursive;
+      margin: 0;
+      background: linear-gradient(135deg, #001f54, #004aad, #00c6ff);
       color: white;
       text-align: center;
-      margin: 0;
-      padding: 0;
     }
     h1 {
       font-size: 2.5rem;
       margin: 20px 0;
-      text-shadow: 2px 2px #000;
+      text-shadow: 2px 2px 5px black;
     }
     .container {
-      max-width: 1000px;
-      margin: auto;
+      display: none;
       padding: 20px;
     }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
+    input, button {
+      padding: 10px;
+      margin: 5px;
       border: none;
-      border-radius: 8px;
-      background: #facc15;
-      color: #000;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    input {
+      width: 200px;
+    }
+    button {
+      background: gold;
+      color: black;
       font-weight: bold;
       cursor: pointer;
-      transition: transform 0.2s;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
     button:hover {
       transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 1);
     }
-    .hidden { display: none; }
-
-    /* Preguntas estilo Preguntados */
-    .question-box {
-      background: white;
-      color: black;
-      border-radius: 20px;
+    .login, .admin, .game, .chat, .ranking {
+      background: rgba(0,0,0,0.6);
       padding: 20px;
-      margin: 20px auto;
-      max-width: 600px;
-      animation: fadeIn 0.6s ease-in-out;
-    }
-    .option {
-      background: #3b82f6;
-      color: white;
-      padding: 15px;
       border-radius: 10px;
-      margin: 10px 0;
-      cursor: pointer;
-      transition: 0.3s;
+      margin: 15px auto;
+      max-width: 500px;
     }
-    .option:hover {
-      background: #1d4ed8;
-    }
-
-    /* Chat */
-    #chat-box {
-      background: rgba(0,0,0,0.5);
-      border-radius: 10px;
-      padding: 10px;
+    #messages {
       height: 200px;
       overflow-y: auto;
-      margin-bottom: 10px;
+      border: 2px solid gold;
+      padding: 10px;
       text-align: left;
-      font-size: 14px;
+      background: rgba(0,0,0,0.3);
     }
-
-    /* Ranking */
-    #ranking {
-      margin-top: 20px;
+    .msg { margin: 5px 0; padding: 5px; border-radius: 8px; }
+    .msg.user { background: #004aad; }
+    .msg.other { background: #0066cc; }
+    #rankingList {
+      list-style: none;
+      padding: 0;
+    }
+    #rankingList li {
       background: rgba(255,255,255,0.1);
-      border-radius: 15px;
-      padding: 15px;
+      margin: 5px;
+      padding: 10px;
+      border-radius: 5px;
     }
-    #ranking h2 {
-      margin-bottom: 10px;
-    }
-    .rank-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.3);
-    }
-
-    /* Notificaciones */
-    #notification {
+    .notification {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #22c55e;
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      display: none;
-      animation: fadeIn 0.5s ease-in-out;
+      top: 10px;
+      right: 10px;
+      background: gold;
+      color: black;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      animation: fadeout 3s forwards;
     }
-
-    /* Animaciones */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    /* Panel admin */
-    #admin-panel {
-      background: rgba(0,0,0,0.7);
-      padding: 20px;
-      border-radius: 15px;
+    @keyframes fadeout {
+      0% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
     }
   </style>
 </head>
 <body>
-  <h1>🏉 Rugby Preguntados</h1>
-  <div class="container">
+  <h1>🏉 Vicentinos Challenge 🏉</h1>
 
-    <!-- LOGIN -->
-    <div id="login-screen">
-      <h2>Iniciar Sesión</h2>
-      <input id="username" placeholder="Tu alias" />
-      <button onclick="loginUser()">Entrar</button>
-      <br>
-      <h3>Login Admin</h3>
-      <input id="adminToken" placeholder="Token admin" />
-      <button onclick="loginAdmin()">Entrar Admin</button>
-    </div>
-
-    <!-- PANEL PRINCIPAL -->
-    <div id="main-screen" class="hidden">
-      <h2 id="welcome"></h2>
-      <p>💰 Monedas: <span id="coins">0</span></p>
-      <button onclick="startGame()">🎮 Jugar</button>
-      <button onclick="showPacks()">💰 Comprar Monedas</button>
-
-      <!-- CHAT -->
-      <h3>💬 Chat en vivo</h3>
-      <div id="chat-box"></div>
-      <input id="chat-input" placeholder="Escribe tu mensaje..." />
-      <button onclick="sendMessage()">Enviar</button>
-
-      <!-- RANKING -->
-      <div id="ranking">
-        <h2>🏆 Ranking TOP 10</h2>
-        <div id="ranking-list"></div>
-      </div>
-
-      <button onclick="logout()">Cerrar Sesión</button>
-    </div>
-
-    <!-- PREGUNTAS -->
-    <div id="game-screen" class="hidden">
-      <h2>Nivel <span id="current-level">1</span></h2>
-      <p>Apuesta mínima: 500 monedas</p>
-      <input id="bet-amount" type="number" min="500" value="500" />
-      <button onclick="startQuestion()">Iniciar Pregunta</button>
-      <div id="question-container"></div>
-      <p id="timer"></p>
-      <button onclick="backToMenu()">⬅️ Volver al Menú</button>
-    </div>
-
-    <!-- PACKS -->
-    <div id="packs-screen" class="hidden">
-      <h2>Comprar Monedas</h2>
-      <button onclick="buyCoins(1000)">1000 monedas - $1 USD</button>
-      <button onclick="buyCoins(5000)">5000 monedas - $4 USD</button>
-      <button onclick="buyCoins(10000)">10000 monedas - $7 USD</button>
-      <br>
-      <button onclick="backToMenu()">⬅️ Volver</button>
-    </div>
-
-    <!-- PANEL ADMIN -->
-    <div id="admin-panel" class="hidden">
-      <h2>Panel Admin</h2>
-      <input id="targetUser" placeholder="Usuario" />
-      <input id="coinAmount" type="number" placeholder="Cantidad monedas" />
-      <button onclick="addCoins()">Cargar</button>
-      <button onclick="removeCoins()">Restar</button>
-      <br><br>
-      <button onclick="blockUser()">Bloquear Usuario</button>
-      <button onclick="deleteMessages()">Eliminar Mensajes</button>
-      <button onclick="logout()">Cerrar Sesión</button>
-    </div>
+  <!-- Login -->
+  <div class="container login" id="loginContainer" style="display:block;">
+    <h2>Iniciar Sesión</h2>
+    <input type="text" id="username" placeholder="Nombre de usuario">
+    <button onclick="loginUser()">Entrar</button>
+    <h3>Admin</h3>
+    <input type="password" id="adminToken" placeholder="Token admin">
+    <button onclick="loginAdmin()">Entrar Admin</button>
   </div>
 
-  <!-- Notificación -->
-  <div id="notification"></div>
+  <!-- Juego -->
+  <div class="container game" id="gameContainer">
+    <h2 id="questionTitle">Pregunta</h2>
+    <p id="questionText"></p>
+    <button id="optionA" onclick="answer('A')"></button>
+    <button id="optionB" onclick="answer('B')"></button>
+    <button id="optionC" onclick="answer('C')"></button>
+    <p id="levelInfo"></p>
+  </div>
+
+  <!-- Chat -->
+  <div class="container chat" id="chatContainer">
+    <h2>Chat en Vivo</h2>
+    <div id="messages"></div>
+    <input type="text" id="chatInput" placeholder="Escribe un mensaje">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+
+  <!-- Ranking -->
+  <div class="container ranking" id="rankingContainer">
+    <h2>🏆 Ranking</h2>
+    <ul id="rankingList"></ul>
+    <button onclick="buyCoins()">💰 Comprar Pack de Monedas</button>
+  </div>
+
+  <!-- Panel Admin -->
+  <div class="container admin" id="adminContainer">
+    <h2>Panel Admin</h2>
+    <input type="text" id="targetUser" placeholder="Usuario">
+    <input type="number" id="coinAmount" placeholder="Cantidad monedas">
+    <button onclick="addCoins()">Cargar</button>
+    <button onclick="removeCoins()">Restar</button>
+    <button onclick="blockUser()">Bloquear Usuario</button>
+    <button onclick="deleteMessages()">Eliminar Mensajes</button>
+    <button onclick="logout()">Cerrar Sesión</button>
+  </div>
 
   <!-- Sonidos -->
-  <audio id="sound-correct" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
-  <audio id="sound-wrong" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-  <audio id="sound-levelup" src="https://actions.google.com/sounds/v1/cartoon/woodpecker.ogg"></audio>
+  <audio id="soundCorrect" src="https://www.myinstants.com/media/sounds/correct-answer.mp3"></audio>
+  <audio id="soundWrong" src="https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3"></audio>
 
   <!-- Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { createClient } = supabase;
+    const supa = createClient(
+      "https://aqkqbtunbyifbfrvkpxv.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY"
+    );
 
     let currentUser = null;
-    let coins = 0;
     let currentLevel = 1;
     let currentQuestion = null;
-    let timerInterval;
+
+    function notify(msg) {
+      const n = document.createElement("div");
+      n.className = "notification";
+      n.innerText = msg;
+      document.body.appendChild(n);
+      setTimeout(()=>n.remove(), 3000);
+    }
 
     async function loginUser() {
       const username = document.getElementById("username").value.trim();
-      if (!username) return alert("Ingresá un alias");
-      let { data: user, error } = await supabase.from("users").select("*").eq("username", username).single();
-      if (!user) {
-        await supabase.from("users").insert([{ username, coins: 1500 }]);
-        user = { username, coins: 1500 };
+      if (!username) return notify("Ingresa un nombre");
+
+      let { data, error } = await supa.from("users").select("*").eq("username", username).single();
+      if (!data) {
+        let { data: newUser } = await supa.from("users").insert({ username }).select().single();
+        data = newUser;
       }
-      currentUser = user;
-      coins = user.coins;
-      document.getElementById("welcome").innerText = `Bienvenido ${username}`;
-      document.getElementById("coins").innerText = coins;
-      showScreen("main-screen");
+      if (data.blocked) return notify("Usuario bloqueado");
+
+      currentUser = data;
+      document.getElementById("loginContainer").style.display = "none";
+      document.getElementById("gameContainer").style.display = "block";
+      document.getElementById("chatContainer").style.display = "block";
+      document.getElementById("rankingContainer").style.display = "block";
+      loadQuestion();
       loadChat();
       loadRanking();
+      notify("Bienvenido " + username);
     }
 
     async function loginAdmin() {
-      const token = document.getElementById("adminToken").value;
-      if (token === "20250819802006") {
-        showScreen("admin-panel");
-      } else {
-        alert("Token inválido");
-      }
-    }
+      const token = document.getElementById("adminToken").value.trim();
+      if (token !== "20250819802006") return notify("Token inválido");
 
-    function logout() {
-      currentUser = null;
-      showScreen("login-screen");
-    }
-
-    function showScreen(id) {
-      document.querySelectorAll(".container > div").forEach(div => div.classList.add("hidden"));
-      document.getElementById(id).classList.remove("hidden");
-    }
-
-    function backToMenu() {
-      showScreen("main-screen");
+      document.getElementById("loginContainer").style.display = "none";
+      document.getElementById("adminContainer").style.display = "block";
       loadRanking();
     }
 
-    function notify(msg, color = "#22c55e") {
-      const notif = document.getElementById("notification");
-      notif.innerText = msg;
-      notif.style.background = color;
-      notif.style.display = "block";
-      setTimeout(() => notif.style.display = "none", 3000);
+    async function loadQuestion() {
+      let { data } = await supa.from("questions").select("*").eq("level", currentLevel);
+      if (!data || !data.length) {
+        notify("Ganaste! No hay más preguntas");
+        return;
+      }
+      currentQuestion = data[Math.floor(Math.random()*data.length)];
+      document.getElementById("questionTitle").innerText = "Nivel " + currentQuestion.level;
+      document.getElementById("questionText").innerText = currentQuestion.question;
+      document.getElementById("optionA").innerText = currentQuestion.option_a;
+      document.getElementById("optionB").innerText = currentQuestion.option_b;
+      document.getElementById("optionC").innerText = currentQuestion.option_c;
+      document.getElementById("levelInfo").innerText = "Pregunta de nivel " + currentQuestion.level;
     }
 
-    // CHAT
+    async function answer(choice) {
+      if (!currentQuestion) return;
+      if (choice === currentQuestion.correct_option) {
+        document.getElementById("soundCorrect").play();
+        notify("¡Correcto!");
+        currentLevel++;
+        await supa.from("users").update({ coins: currentUser.coins+5 }).eq("id", currentUser.id);
+        currentUser.coins += 5;
+        loadRanking();
+      } else {
+        document.getElementById("soundWrong").play();
+        notify("Respuesta incorrecta");
+      }
+      loadQuestion();
+    }
+
     async function loadChat() {
-      const { data } = await supabase.from("chat").select("*, users(username)").order("created_at", { ascending: true });
-      const chatBox = document.getElementById("chat-box");
-      chatBox.innerHTML = "";
-      data.forEach(m => {
-        const time = new Date(m.created_at).toLocaleTimeString();
-        chatBox.innerHTML += `<p><b>${m.users.username}</b> [${time}]: ${m.message}</p>`;
+      let { data } = await supa.from("chat").select("*, users(username)").order("created_at",{ascending:true});
+      const msgBox = document.getElementById("messages");
+      msgBox.innerHTML = "";
+      data.forEach(m=>{
+        const div = document.createElement("div");
+        div.className = "msg " + (m.user_id===currentUser.id?"user":"other");
+        div.innerText = m.users.username + ": " + m.message;
+        msgBox.appendChild(div);
       });
-      chatBox.scrollTop = chatBox.scrollHeight;
+      msgBox.scrollTop = msgBox.scrollHeight;
     }
 
     async function sendMessage() {
-      const msg = document.getElementById("chat-input").value.trim();
-      if (!msg || !currentUser) return;
-      await supabase.from("chat").insert([{ user_id: currentUser.id, message: msg }]);
-      document.getElementById("chat-input").value = "";
+      const txt = document.getElementById("chatInput").value.trim();
+      if (!txt) return;
+      await supa.from("chat").insert({ user_id: currentUser.id, message: txt });
+      document.getElementById("chatInput").value = "";
       loadChat();
     }
 
-    // RANKING
     async function loadRanking() {
-      const { data } = await supabase.from("users").select("username, coins").order("coins", { ascending: false }).limit(10);
-      const rankDiv = document.getElementById("ranking-list");
-      rankDiv.innerHTML = "";
-      data.forEach((u, i) => {
-        rankDiv.innerHTML += `<div class="rank-item"><span>🏅 ${i+1}. ${u.username}</span><span>${u.coins} 💰</span></div>`;
+      let { data } = await supa.from("users").select("*").order("coins",{ascending:false}).limit(10);
+      const ul = document.getElementById("rankingList");
+      ul.innerHTML="";
+      data.forEach(u=>{
+        const li = document.createElement("li");
+        li.innerText = u.username+" - "+u.coins+" monedas";
+        ul.appendChild(li);
       });
     }
 
-    // GAME
-    async function startGame() {
-      currentLevel = 1;
-      showScreen("game-screen");
-      document.getElementById("current-level").innerText = currentLevel;
+    async function buyCoins() {
+      if (!currentUser) return;
+      await supa.from("users").update({ coins: currentUser.coins+20 }).eq("id", currentUser.id);
+      currentUser.coins += 20;
+      notify("Pack comprado! +20 monedas");
+      loadRanking();
     }
 
-    async function startQuestion() {
-      const bet = parseInt(document.getElementById("bet-amount").value);
-      if (bet < 500 || bet > coins) return alert("Apuesta inválida");
-      const { data } = await supabase.from("questions").select("*").eq("level", currentLevel).order("random()").limit(1);
-      if (!data || !data.length) return notify("No hay más preguntas", "red");
-      currentQuestion = data[0];
-      document.getElementById("question-container").innerHTML = `
-        <div class="question-box">
-          <h3>${currentQuestion.question}</h3>
-          <div class="option" onclick="answer('A', ${bet})">${currentQuestion.option_a}</div>
-          <div class="option" onclick="answer('B', ${bet})">${currentQuestion.option_b}</div>
-          <div class="option" onclick="answer('C', ${bet})">${currentQuestion.option_c}</div>
-        </div>
-      `;
-      startTimer(20, bet);
-    }
-
-    function startTimer(seconds, bet) {
-      let timeLeft = seconds;
-      document.getElementById("timer").innerText = `⏳ ${timeLeft}s`;
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer").innerText = `⏳ ${timeLeft}s`;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          answer("TIMEOUT", bet);
-        }
-      }, 1000);
-    }
-
-    async function answer(choice, bet) {
-      clearInterval(timerInterval);
-      if (choice === currentQuestion.correct_option) {
-        coins += bet;
-        document.getElementById("coins").innerText = coins;
-        notify("✅ Respuesta Correcta! +" + bet + " monedas");
-        document.getElementById("sound-correct").play();
-        currentLevel++;
-        if (currentLevel > 15) {
-          notify("🎉 Terminaste todos los niveles!", "#facc15");
-        } else {
-          document.getElementById("current-level").innerText = currentLevel;
-          document.getElementById("sound-levelup").play();
-        }
-      } else {
-        coins -= bet;
-        document.getElementById("coins").innerText = coins;
-        notify("❌ Respuesta Incorrecta -" + bet + " monedas", "red");
-        document.getElementById("sound-wrong").play();
-      }
-      await supabase.from("users").update({ coins }).eq("username", currentUser.username);
-    }
-
-    // PACKS
-    async function buyCoins(amount) {
-      coins += amount;
-      document.getElementById("coins").innerText = coins;
-      await supabase.from("users").update({ coins }).eq("username", currentUser.username);
-      notify("Compraste " + amount + " monedas!");
-    }
-
-    // ADMIN
+    // Panel Admin
     async function addCoins() {
-      const user = document.getElementById("targetUser").value;
-      const amt = parseInt(document.getElementById("coinAmount").value);
-      await supabase.rpc("increment_coins", { username_input: user, amount: amt });
-      notify("Monedas cargadas a " + user);
+      const user = document.getElementById("targetUser").value.trim();
+      const amount = parseInt(document.getElementById("coinAmount").value);
+      if (!user || isNaN(amount)) return notify("Completa los datos");
+      await supa.rpc("exec",`update users set coins = coins + ${amount} where username='${user}'`);
+      await supa.from("users").update({ coins: supa.sql`coins + ${amount}` }).eq("username", user);
+      notify("Monedas agregadas");
+      loadRanking();
     }
     async function removeCoins() {
-      const user = document.getElementById("targetUser").value;
-      const amt = parseInt(document.getElementById("coinAmount").value);
-      await supabase.rpc("increment_coins", { username_input: user, amount: -amt });
-      notify("Monedas restadas a " + user, "red");
+      const user = document.getElementById("targetUser").value.trim();
+      const amount = parseInt(document.getElementById("coinAmount").value);
+      if (!user || isNaN(amount)) return notify("Completa los datos");
+      await supa.rpc("exec",`update users set coins = coins - ${amount} where username='${user}'`);
+      await supa.from("users").update({ coins: supa.sql`coins - ${amount}` }).eq("username", user);
+      notify("Monedas restadas");
+      loadRanking();
     }
     async function blockUser() {
-      const user = document.getElementById("targetUser").value;
-      await supabase.from("users").update({ blocked: true }).eq("username", user);
-      notify(user + " bloqueado", "red");
+      const user = document.getElementById("targetUser").value.trim();
+      await supa.from("users").update({ blocked:true }).eq("username",user);
+      notify("Usuario bloqueado");
     }
     async function deleteMessages() {
-      const user = document.getElementById("targetUser").value;
-      const { data } = await supabase.from("users").select("id").eq("username", user).single();
-      if (data) {
-        await supabase.from("chat").delete().eq("user_id", data.id);
-        notify("Mensajes de " + user + " borrados");
-      }
+      await supa.from("chat").delete().neq("id",0);
+      notify("Mensajes borrados");
+      loadChat();
+    }
+    function logout() {
+      location.reload();
     }
   </script>
 </body>
