@@ -3,216 +3,212 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vicentinos Challenge 🏉</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Vicentinos Challenge 🏈</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      background: #003366;
+      background: #001a33;
       color: #0f0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       font-family: 'Inter', sans-serif;
-      text-shadow: 0 0 5px #0f0;
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column; align-items: center;
     }
-    .container {
-      margin: 15px auto;
-      background: rgba(0, 0, 0, 0.85);
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 600px;
-      border: 1px solid #0f0;
-      box-shadow: 0 0 15px #0f0;
+    h1, h2 { color: #0f0; }
+    .box {
+      background: #000; border: 1px solid #0f0; border-radius: 8px;
+      padding: 16px; margin: 12px; width: 90%; max-width: 500px;
     }
-    h2 { text-align: center; margin-bottom: 15px; }
     input, button {
-      margin: 6px 0;
-      padding: 10px;
-      width: 100%;
-      border-radius: 6px;
-      border: 1px solid #0f0;
-      background: #111;
-      color: #0f0;
+      padding: 8px; margin: 6px 0; width: 100%;
+      border-radius: 4px; border: none;
     }
-    button {
-      background: #0f0;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .msg { margin: 5px 0; padding: 5px; background: rgba(0,255,0,0.1); border-left: 3px solid #0f0; }
+    button { background: #0f0; color: #000; font-weight: bold; cursor: pointer; }
+    button:hover { background: #9f9; }
+    #chatBox { max-height: 200px; overflow-y: auto; background: #111; padding: 8px; border: 1px solid #0f0; }
+    .msg { border-bottom: 1px solid #033; padding: 4px 0; }
+    .msg small { color: #999; }
+    #adminPanel { display: none; background: #111; }
   </style>
 </head>
 <body>
+  <h1>🏈 Vicentinos Challenge</h1>
 
-  <!-- LOGIN -->
-  <div class="container" id="inicio">
-    <h2>🎮 Ingresar</h2>
-    <input type="text" id="alias" placeholder="Tu nombre de guerra o token admin" />
-    <button onclick="iniciar()">¡JUGAR!</button>
-  </div>
-
-  <!-- ADMIN PANEL -->
-  <div class="container" id="admin-panel" style="display:none;">
-    <h2>🛠️ Panel de Control</h2>
-    <p><strong>Admin conectado</strong></p>
-
-    <h3>👤 Crear usuario</h3>
-    <input type="text" id="nuevo-usuario" placeholder="Alias nuevo" />
-    <button onclick="crearUsuario()">Crear Usuario</button>
-
-    <h3>💰 Cargar / Restar monedas</h3>
-    <input type="text" id="alias-monedas" placeholder="Alias jugador" />
-    <input type="number" id="cantidad-monedas" placeholder="Cantidad (+ o -)" />
-    <button onclick="modificarMonedas()">Actualizar Monedas</button>
-
-    <h3>🧹 Eliminar mensajes de usuario</h3>
-    <input type="text" id="alias-msg" placeholder="Alias jugador" />
-    <button onclick="eliminarMensajes()">Eliminar Mensajes</button>
-
-    <button onclick="volverAlMenu()">⬅️ Cerrar Panel</button>
-  </div>
-
-  <!-- JUEGO -->
-  <div class="container" id="juego" style="display:none;">
-    <h2>Nivel 1: Iniciación</h2>
-    <p><strong>Jugador:</strong> <span id="jugador-nombre"></span></p>
-    <p><strong>Monedas:</strong> <span id="monedas">0</span></p>
-    <p>Este es el juego. Próximamente se agregarán preguntas.</p>
-    <button onclick="volverAlMenu()">🏠 Menú Principal</button>
+  <!-- LOGIN / REGISTRO -->
+  <div class="box" id="loginBox">
+    <h2>Tu nombre de guerra</h2>
+    <input type="text" id="usernameInput" placeholder="Alias..." />
+    <button onclick="login()">¡JUGAR AHORA!</button>
   </div>
 
   <!-- CHAT -->
-  <div class="container" id="chat-container">
+  <div class="box" id="chatSection" style="display:none;">
     <h2>💬 Chat del Estadio</h2>
-    <input type="text" id="msg" placeholder="Escribe un mensaje..." />
-    <button onclick="enviarChat()">Enviar</button>
-    <div class="chat" id="chat"></div>
+    <div id="chatBox"></div>
+    <input type="text" id="chatInput" placeholder="Escribe un mensaje..." />
+    <button onclick="sendMessage()">Enviar</button>
   </div>
 
   <!-- RANKING -->
-  <div class="container" id="ranking-container">
+  <div class="box" id="rankingSection" style="display:none;">
     <h2>🏆 Ranking</h2>
-    <div id="ranking"></div>
+    <div id="rankingBox"></div>
+  </div>
+
+  <!-- PANEL ADMIN -->
+  <div class="box" id="adminPanel">
+    <h2>⚙️ Panel de Admin</h2>
+
+    <h3>Crear usuario</h3>
+    <input type="text" id="newUser" placeholder="Alias nuevo..." />
+    <button onclick="createUser()">Crear</button>
+
+    <h3>Cargar / Restar monedas</h3>
+    <input type="text" id="coinUser" placeholder="Alias usuario..." />
+    <input type="number" id="coinAmount" placeholder="Cantidad (+ o -)" />
+    <button onclick="updateCoins()">Aplicar</button>
+
+    <h3>Eliminar mensajes de usuario</h3>
+    <input type="text" id="deleteUser" placeholder="Alias usuario..." />
+    <button onclick="deleteMessages()">Borrar mensajes</button>
   </div>
 
   <script>
-    const supabaseUrl = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    // Conexión Supabase
+    const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let jugadorAlias = "";
+    let currentUser = null;
+    const ADMIN_TOKEN = "20250819802006";
 
-    async function iniciar() {
-      const alias = document.getElementById("alias").value.trim();
-      if (!alias) return alert("Alias requerido");
+    // LOGIN
+    async function login() {
+      const username = document.getElementById("usernameInput").value.trim();
+      if (!username) return alert("Ingresá un alias");
 
-      if (alias === "20250819802006") {
-        document.getElementById("inicio").style.display = "none";
-        document.getElementById("admin-panel").style.display = "block";
+      if (username === ADMIN_TOKEN) {
+        currentUser = { username: "admin", role: "admin" };
+        document.getElementById("adminPanel").style.display = "block";
+        document.getElementById("chatSection").style.display = "block";
+        document.getElementById("rankingSection").style.display = "block";
+        loadChat();
+        loadRanking();
         return;
       }
 
-      jugadorAlias = alias;
-
-      // Insertar jugador si no existe
-      const { error } = await supabaseClient
+      // Si no existe el usuario, lo crea
+      const { error } = await supabase
         .from("users")
-        .upsert({ username: alias }, { onConflict: "username" });
-
-      if (error) {
-        alert("Error al registrar usuario");
-        console.error(error);
-        return;
-      }
-
-      mostrarJuego(alias);
-    }
-
-    async function mostrarJuego(alias) {
-      const { data, error } = await supabaseClient
-        .from("users")
-        .select()
-        .eq("username", alias)
-        .single();
+        .upsert([{ username }]);
 
       if (error) {
         console.error(error);
-        return;
+        return alert("Error al registrar usuario");
       }
 
-      document.getElementById("inicio").style.display = "none";
-      document.getElementById("juego").style.display = "block";
-      document.getElementById("jugador-nombre").textContent = data.username;
-      document.getElementById("monedas").textContent = data.coins;
+      currentUser = { username, role: "user" };
+      document.getElementById("chatSection").style.display = "block";
+      document.getElementById("rankingSection").style.display = "block";
+      loadChat();
+      loadRanking();
     }
 
-    function volverAlMenu() {
-      document.getElementById("juego").style.display = "none";
-      document.getElementById("admin-panel").style.display = "none";
-      document.getElementById("inicio").style.display = "block";
+    // ENVIAR MENSAJE
+    async function sendMessage() {
+      const msg = document.getElementById("chatInput").value.trim();
+      if (!msg || !currentUser) return;
+
+      const { error } = await supabase
+        .from("chat_messages")
+        .insert([{ username: currentUser.username, message: msg }]);
+
+      if (error) {
+        console.error(error);
+        return alert("Error al enviar mensaje");
+      }
+      document.getElementById("chatInput").value = "";
+      loadChat();
     }
 
-    // Chat
-    async function enviarChat() {
-      const msg = document.getElementById("msg").value.trim();
-      if (!msg) return;
-      await supabaseClient.from("messages").insert([{ username: jugadorAlias || "Anon", content: msg }]);
-      document.getElementById("msg").value = "";
-    }
+    // CARGAR CHAT
+    async function loadChat() {
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("username, message, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-    supabaseClient
-      .channel("chat")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
-        const chat = document.getElementById("chat");
+      if (error) return console.error(error);
+
+      const chatBox = document.getElementById("chatBox");
+      chatBox.innerHTML = "";
+      data.reverse().forEach(row => {
         const div = document.createElement("div");
         div.className = "msg";
-        div.textContent = `${payload.new.username}: ${payload.new.content}`;
-        chat.appendChild(div);
-        chat.scrollTop = chat.scrollHeight;
-      })
-      .subscribe();
-
-    // Ranking
-    setInterval(async () => {
-      const { data } = await supabaseClient.from("users").select();
-      if (!data) return;
-      const rank = document.getElementById("ranking");
-      rank.innerHTML = "";
-      data.sort((a, b) => b.coins - a.coins)
-          .slice(0, 10)
-          .forEach((j, i) => {
-            const item = document.createElement("div");
-            item.className = "msg";
-            item.textContent = `#${i+1} ${j.username} | ${j.coins} monedas`;
-            rank.appendChild(item);
-          });
-    }, 3000);
-
-    // ADMIN FUNCIONES
-    async function crearUsuario() {
-      const alias = document.getElementById("nuevo-usuario").value.trim();
-      if (!alias) return alert("Alias requerido");
-      await supabaseClient.rpc("create_user_if_not_exists", { uname: alias });
-      alert("Usuario creado (o ya existía)");
+        div.innerHTML = `<strong>${row.username}:</strong> ${row.message} <br><small>${new Date(row.created_at).toLocaleString()}</small>`;
+        chatBox.appendChild(div);
+      });
     }
 
-    async function modificarMonedas() {
-      const alias = document.getElementById("alias-monedas").value.trim();
-      const cantidad = parseInt(document.getElementById("cantidad-monedas").value);
-      if (!alias || isNaN(cantidad)) return alert("Datos inválidos");
-      await supabaseClient.rpc("update_user_coins", { uname: alias, amount: cantidad });
+    // RANKING
+    async function loadRanking() {
+      const { data, error } = await supabase
+        .from("users")
+        .select("username, coins")
+        .order("coins", { ascending: false });
+
+      if (error) return console.error(error);
+
+      const box = document.getElementById("rankingBox");
+      box.innerHTML = "";
+      data.forEach((u, i) => {
+        const div = document.createElement("div");
+        div.textContent = `#${i+1} ${u.username} | ${u.coins} monedas`;
+        box.appendChild(div);
+      });
+    }
+
+    // ADMIN: CREAR USUARIO
+    async function createUser() {
+      const username = document.getElementById("newUser").value.trim();
+      if (!username) return alert("Alias requerido");
+
+      const { error } = await supabase
+        .from("users")
+        .insert([{ username }]);
+
+      if (error) return alert("Error al crear usuario");
+      alert("Usuario creado");
+      loadRanking();
+    }
+
+    // ADMIN: MODIFICAR MONEDAS
+    async function updateCoins() {
+      const username = document.getElementById("coinUser").value.trim();
+      const amount = parseInt(document.getElementById("coinAmount").value);
+      if (!username || isNaN(amount)) return alert("Datos inválidos");
+
+      const { error } = await supabase.rpc("increment_coins", { p_username: username, p_amount: amount });
+
+      if (error) return alert("Error al modificar monedas");
       alert("Monedas actualizadas");
+      loadRanking();
     }
 
-    async function eliminarMensajes() {
-      const alias = document.getElementById("alias-msg").value.trim();
-      if (!alias) return alert("Alias requerido");
-      await supabaseClient.rpc("delete_user_messages", { uname: alias });
-      alert("Mensajes eliminados");
+    // ADMIN: ELIMINAR MENSAJES
+    async function deleteMessages() {
+      const username = document.getElementById("deleteUser").value.trim();
+      if (!username) return alert("Alias requerido");
+
+      const { error } = await supabase
+        .from("chat_messages")
+        .delete()
+        .eq("username", username);
+
+      if (error) return alert("Error al borrar mensajes");
+      alert("Mensajes borrados");
+      loadChat();
     }
   </script>
 </body>
