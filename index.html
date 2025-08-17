@@ -2,36 +2,48 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Vicentinos Challenge</title>
+  <title>🏉 Rugby Preguntados</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Fuente y estilo -->
+  <!-- Fuente Google -->
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+
   <style>
     body {
       font-family: 'Fredoka One', cursive;
       margin: 0;
-      background: linear-gradient(135deg, #001f54, #004aad, #00c6ff);
+      background: linear-gradient(135deg, #0066ff, #00c6ff, #0099cc);
       color: white;
       text-align: center;
     }
     h1 {
-      font-size: 2.5rem;
+      font-size: 3rem;
       margin: 20px 0;
-      text-shadow: 2px 2px 5px black;
+      text-shadow: 3px 3px 8px black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
+    h2 { text-shadow: 2px 2px 5px black; }
     .container {
       display: none;
       padding: 20px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
     input, button {
       padding: 10px;
       margin: 5px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       font-size: 1rem;
     }
     input {
       width: 200px;
+      text-align: center;
     }
     button {
       background: gold;
@@ -43,14 +55,18 @@
     }
     button:hover {
       transform: scale(1.1);
-      box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+      box-shadow: 0 0 25px rgba(255, 255, 0, 1);
     }
-    .login, .admin, .game, .chat, .ranking {
+    .login, .admin, .game, .chat, .ranking, .menu {
       background: rgba(0,0,0,0.6);
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 15px;
       margin: 15px auto;
       max-width: 500px;
+    }
+    .menu button {
+      width: 90%;
+      margin: 10px 0;
     }
     #messages {
       height: 200px;
@@ -59,6 +75,7 @@
       padding: 10px;
       text-align: left;
       background: rgba(0,0,0,0.3);
+      border-radius: 10px;
     }
     .msg { margin: 5px 0; padding: 5px; border-radius: 8px; }
     .msg.user { background: #004aad; }
@@ -71,7 +88,7 @@
       background: rgba(255,255,255,0.1);
       margin: 5px;
       padding: 10px;
-      border-radius: 5px;
+      border-radius: 10px;
     }
     .notification {
       position: fixed;
@@ -80,7 +97,7 @@
       background: gold;
       color: black;
       padding: 10px 20px;
-      border-radius: 5px;
+      border-radius: 10px;
       font-weight: bold;
       animation: fadeout 3s forwards;
     }
@@ -92,16 +109,26 @@
   </style>
 </head>
 <body>
-  <h1>🏉 Vicentinos Challenge 🏉</h1>
+  <h1>🏉 Rugby Preguntados</h1>
 
   <!-- Login -->
   <div class="container login" id="loginContainer" style="display:block;">
     <h2>Iniciar Sesión</h2>
-    <input type="text" id="username" placeholder="Nombre de usuario">
+    <input type="text" id="username" placeholder="Tu alias">
     <button onclick="loginUser()">Entrar</button>
-    <h3>Admin</h3>
+    <h3>Login Admin</h3>
     <input type="password" id="adminToken" placeholder="Token admin">
     <button onclick="loginAdmin()">Entrar Admin</button>
+  </div>
+
+  <!-- Menú jugador -->
+  <div class="container menu" id="menuContainer">
+    <h2>Menú Principal</h2>
+    <button onclick="showSection('gameContainer')">🎮 Jugar</button>
+    <button onclick="showSection('chatContainer')">💬 Chat</button>
+    <button onclick="showSection('rankingContainer')">🏆 Ranking</button>
+    <button onclick="showSection('shopContainer')">💰 Tienda</button>
+    <button onclick="logout()">🚪 Cerrar Sesión</button>
   </div>
 
   <!-- Juego -->
@@ -112,6 +139,7 @@
     <button id="optionB" onclick="answer('B')"></button>
     <button id="optionC" onclick="answer('C')"></button>
     <p id="levelInfo"></p>
+    <button onclick="backToMenu()">⬅️ Volver al Menú</button>
   </div>
 
   <!-- Chat -->
@@ -120,13 +148,23 @@
     <div id="messages"></div>
     <input type="text" id="chatInput" placeholder="Escribe un mensaje">
     <button onclick="sendMessage()">Enviar</button>
+    <button onclick="backToMenu()">⬅️ Volver al Menú</button>
   </div>
 
   <!-- Ranking -->
   <div class="container ranking" id="rankingContainer">
     <h2>🏆 Ranking</h2>
     <ul id="rankingList"></ul>
-    <button onclick="buyCoins()">💰 Comprar Pack de Monedas</button>
+    <button onclick="backToMenu()">⬅️ Volver al Menú</button>
+  </div>
+
+  <!-- Tienda -->
+  <div class="container ranking" id="shopContainer">
+    <h2>💰 Comprar Monedas</h2>
+    <button onclick="buyPack(2000,'https://mpago.la/16CyPeY')">Pack 2000 monedas - $2000</button>
+    <button onclick="buyPack(5000,'https://mpago.la/1TTVVcV')">Pack 5000 monedas - $5000</button>
+    <button onclick="buyPack(10000,'https://mpago.la/2HR6fjA')">Pack 10000 monedas - $10000</button>
+    <button onclick="backToMenu()">⬅️ Volver al Menú</button>
   </div>
 
   <!-- Panel Admin -->
@@ -134,11 +172,12 @@
     <h2>Panel Admin</h2>
     <input type="text" id="targetUser" placeholder="Usuario">
     <input type="number" id="coinAmount" placeholder="Cantidad monedas">
-    <button onclick="addCoins()">Cargar</button>
-    <button onclick="removeCoins()">Restar</button>
-    <button onclick="blockUser()">Bloquear Usuario</button>
-    <button onclick="deleteMessages()">Eliminar Mensajes</button>
-    <button onclick="logout()">Cerrar Sesión</button>
+    <button onclick="addCoins()">➕ Sumar</button>
+    <button onclick="removeCoins()">➖ Restar</button>
+    <button onclick="blockUser()">⛔ Bloquear Usuario</button>
+    <button onclick="deleteMessages()">🗑️ Eliminar Mensajes Chat</button>
+    <button onclick="backToMenu()">⬅️ Volver al Menú</button>
+    <button onclick="logout()">🚪 Cerrar Sesión</button>
   </div>
 
   <!-- Sonidos -->
@@ -166,6 +205,12 @@
       setTimeout(()=>n.remove(), 3000);
     }
 
+    function showSection(id) {
+      document.querySelectorAll('.container').forEach(c=>c.style.display='none');
+      document.getElementById(id).style.display = "block";
+    }
+    function backToMenu() { showSection('menuContainer'); }
+
     async function loginUser() {
       const username = document.getElementById("username").value.trim();
       if (!username) return notify("Ingresa un nombre");
@@ -179,18 +224,14 @@
 
       currentUser = data;
       document.getElementById("loginContainer").style.display = "none";
-      document.getElementById("gameContainer").style.display = "block";
-      document.getElementById("chatContainer").style.display = "block";
-      document.getElementById("rankingContainer").style.display = "block";
-      loadQuestion();
-      loadChat();
+      document.getElementById("menuContainer").style.display = "block";
       loadRanking();
       notify("Bienvenido " + username);
     }
 
     async function loginAdmin() {
       const token = document.getElementById("adminToken").value.trim();
-      if (token !== "20250819802006") return notify("Token inválido");
+      if (token !== "admin123") return notify("Token inválido");
 
       document.getElementById("loginContainer").style.display = "none";
       document.getElementById("adminContainer").style.display = "block";
@@ -260,11 +301,11 @@
       });
     }
 
-    async function buyCoins() {
-      if (!currentUser) return;
-      await supa.from("users").update({ coins: currentUser.coins+20 }).eq("id", currentUser.id);
-      currentUser.coins += 20;
-      notify("Pack comprado! +20 monedas");
+    async function buyPack(amount, link) {
+      window.open(link,"_blank");
+      await supa.from("users").update({ coins: currentUser.coins+amount }).eq("id", currentUser.id);
+      currentUser.coins += amount;
+      notify("Pack acreditado! +" + amount + " monedas");
       loadRanking();
     }
 
@@ -272,18 +313,14 @@
     async function addCoins() {
       const user = document.getElementById("targetUser").value.trim();
       const amount = parseInt(document.getElementById("coinAmount").value);
-      if (!user || isNaN(amount)) return notify("Completa los datos");
       await supa.rpc("exec",`update users set coins = coins + ${amount} where username='${user}'`);
-      await supa.from("users").update({ coins: supa.sql`coins + ${amount}` }).eq("username", user);
       notify("Monedas agregadas");
       loadRanking();
     }
     async function removeCoins() {
       const user = document.getElementById("targetUser").value.trim();
       const amount = parseInt(document.getElementById("coinAmount").value);
-      if (!user || isNaN(amount)) return notify("Completa los datos");
       await supa.rpc("exec",`update users set coins = coins - ${amount} where username='${user}'`);
-      await supa.from("users").update({ coins: supa.sql`coins - ${amount}` }).eq("username", user);
       notify("Monedas restadas");
       loadRanking();
     }
@@ -297,9 +334,7 @@
       notify("Mensajes borrados");
       loadChat();
     }
-    function logout() {
-      location.reload();
-    }
+    function logout() { location.reload(); }
   </script>
 </body>
 </html>
