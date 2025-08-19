@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#0a2bff" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-  <!-- Cargar Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -127,22 +126,29 @@
     .table tbody tr:hover { background: rgba(255,255,255,.04); }
 
     .chat { height: 260px; overflow: auto; border: 1px solid #22307a; border-radius: 12px; padding: 10px; background: #0d1336; }
-    .msg { margin: 6px 0; }
+    .msg { margin: 6px 0; position: relative; }
     .msg .who { font-weight: 700; margin-right: 6px; }
     .msg.admin { color: #ffd782; }
+    .msg .controls {
+      position: absolute; right: 10px; top: 6px; display: flex; gap: 4px;
+    }
+    .msg .btn-del, .msg .btn-block {
+      font-size: 10px; padding: 2px 6px; background: #f44336; border: 0; border-radius: 4px;
+      color: white; cursor: pointer;
+    }
 
     .hr { height: 1px; background: #22307a; margin: 12px 0; }
     .welcome { font-weight: 800; text-align: center; margin: 10px 0; color: #e8eeff; }
 
     .toast {
       position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-      background: #0e153f; border: 1px solid #2a3aa2; color: #fff; padding: 12px 16px;
+      background: #0e153f; border: 1px solid #2a3aa2; color: #fff; padding: 16px 20px;
       border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.45);
       opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      font-size: 16px; font-weight: 600; min-width: 280px; text-align: center;
     }
     .toast.show { opacity: 1; }
 
-    /* ===================== BOTONES DE COMPRA MEJORADOS ===================== */
     .buy-section {
       margin-top: 20px; padding: 16px; background: #0e153f; border: 1px solid #2a3aa2; border-radius: 12px;
     }
@@ -196,7 +202,7 @@
       <div class="shine"></div>
     </div>
 
-    <!-- RANKING -->
+    <!-- RANKING SIEMPRE VISIBLE -->
     <div class="card">
       <div class="section-title">🏆 Ranking <span class="section-sub">Promedio ponderado</span></div>
       <table class="table" id="rankTable">
@@ -205,7 +211,7 @@
       </table>
     </div>
 
-    <!-- BOTONES DE PAGO (MEJORADOS) -->
+    <!-- BOTONES DE COMPRA -->
     <div class="buy-section">
       <div class="section-title">💰 Compra monedas</div>
       <a href="https://mpago.la/16CyPeY" target="_blank" class="buy-item">
@@ -251,25 +257,21 @@
             <button id="admAdd">Sumar</button>
             <button id="admSub">Restar</button>
             <button id="admBlock">Bloquear</button>
-            <button id="admClearChat">Limpiar chat</button>
-            <button id="admExit">Volver</button>
+            <button id="admExit">Salir</button>
           </div>
         </div>
 
         <div id="casino" class="hidden">
-          <div class="wheel"><div class="center"><div style="font-size:12px;opacity:.8">Apuesta</div><div id="wheelBet" style="font-size:18px">500</div></div></div>
+          <div class="wheel"><div class="center"><div style="font-size:12px;opacity:.8">Apuesta</div><div id="wheelBet" style="font-size:18px">600</div></div></div>
           <div class="row">
-            <input id="betInput" type="number" min="500" step="100" placeholder="Apuesta mínima $500" class="grow" />
+            <input id="betInput" type="number" min="600" step="100" placeholder="Apuesta mínima $600" class="grow" />
             <button id="btnBet" class="btn-alt">Confirmar apuesta</button>
             <div class="stat rfloat level-chip">Nivel <span id="levelChip">1</span>/15</div>
           </div>
           <div id="freeInfo" class="notif hidden">Tenés <b id="freeLeft">3</b> preguntas gratis sin apostar.</div>
           <div class="timer"><div id="timerBar"></div></div>
-          <div class="qbox" id="qText">Elegí apuesta y arrancamos…</div>
+          <div class="qbox" id="qText">Confirmá tu apuesta para empezar.</div>
           <div class="opts" id="optList"></div>
-          <div class="row" style="margin-top:8px">
-            <button id="btnNext" class="btn-ghost disabled">Siguiente</button>
-          </div>
         </div>
       </div>
 
@@ -292,7 +294,7 @@
     const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
     const ADMIN_TOKEN = "20250819802006";
-    const MIN_BET = 500;
+    const MIN_BET = 600;
     const FREE_QUESTIONS = 3;
     const TOTAL_LEVELS = 15;
     const QUESTIONS_PER_LEVEL = 5;
@@ -313,13 +315,13 @@
     function dbGet(key) { return JSON.parse(localStorage.getItem(key) || '[]'); }
     function dbSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-    // ===================== SUPABASE (con espera) =====================
+    // ===================== SUPABASE =====================
     let supa = null;
     let online = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (typeof createClient === 'undefined') {
-        console.error('❌ Supabase no se cargó. Revisa la conexión.');
+        console.error('❌ Supabase no se cargó.');
         toast('Error: no se pudo conectar al servidor');
         return;
       }
@@ -336,11 +338,9 @@
         toast('Error al conectar con el servidor');
       }
 
-      // Iniciar carga
       await loadChat();
       await refreshRanking();
 
-      // Recuperar sesión si existe
       const storedAlias = localStorage.getItem('currentAlias');
       if (storedAlias) {
         user = await getPlayer(storedAlias);
@@ -433,7 +433,7 @@
       {q:"¿Qué se cobra por tacklear alto a la cabeza?", a:["Scrum", "Penal y posible tarjeta", "Nada"], i:1, lvl:12},
       {q:"¿Qué debe hacer el tacklador tras el tackle?", a:["Soltar y ponerse de pie", "Empujar al rival", "Quedarse encima"], i:0, lvl:12},
       {q:"¿Qué lado saca el lineout?", a:["El que no cometió la infracción", "Siempre el local", "Lo decide el árbitro"], i:0, lvl:12},
-      {q:"¿Cómo se llama el torneo del Hemisferio Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
+      {q:"¿Cómo se llama el torneo del Hemisfero Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
       {q:"¿Qué club de Buenos Aires es apodado Cardenales?", a:["SIC", "Newman", "Belgrano"], i:1, lvl:12},
       {q:"¿Cuál es el largo máximo de una patada de salida válida?", a:["Debe superar la línea de 10m", "Debe salir afuera", "Debe picar 2 veces"], i:0, lvl:13},
       {q:"¿Qué es un '50:22'?", a:["Regla de scrum", "Kick que pica en 22 rival desde propio 50 y da lineout al que patea", "Señal de árbitro"], i:1, lvl:13},
@@ -466,7 +466,6 @@
     const btnBet = $('#btnBet');
     const qText = $('#qText');
     const optList = $('#optList');
-    const btnNext = $('#btnNext');
     const timerBar = $('#timerBar');
     const freeInfo = $('#freeInfo');
     const freeLeftEl = $('#freeLeft');
@@ -480,7 +479,6 @@
     const admAdd = $('#admAdd');
     const admSub = $('#admSub');
     const admBlock = $('#admBlock');
-    const admClearChat = $('#admClearChat');
     const admExit = $('#admExit');
     const btnBack = $('#btnBack');
 
@@ -563,7 +561,9 @@
 
     function renderQuestion() {
       if (user.coins < MIN_BET && freeLeft <= 0) {
-        toast('¡Necesitás monedas para jugar! Comprá un pack.');
+        qText.textContent = '¡Necesitás monedas para jugar! Comprá un pack.';
+        optList.innerHTML = '';
+        lockOptions();
         return;
       }
       currentQ = pickQuestion();
@@ -576,7 +576,6 @@
         b.onclick = () => { answer(ix); };
         optList.appendChild(b);
       });
-      btnNext.classList.add('disabled');
       startTimer();
       unlockOptions();
     }
@@ -594,6 +593,7 @@
       if (freeUse) {
         freeLeft--;
         freeLeftEl.textContent = freeLeft;
+        freeInfo.classList.toggle('hidden', freeLeft <= 0);
       } else {
         if (correct) user.coins += currentBet;
         else user.coins = Math.max(0, user.coins - currentBet);
@@ -612,7 +612,9 @@
       setHUD(user);
       await upsertPlayer(user);
       refreshRanking();
-      btnNext.classList.remove('disabled');
+
+      // Ir a la siguiente pregunta automáticamente
+      setTimeout(renderQuestion, 1200);
     }
 
     function setBet() {
@@ -718,7 +720,17 @@
       d.className = 'msg' + (m.admin ? ' admin' : '');
       const ts = m.ts ? new Date(m.ts) : new Date();
       d.innerHTML = `<span class="who">${m.alias}</span> <span style="opacity:.6;font-size:12px">${ts.toLocaleTimeString()}</span> — ${m.text}`;
+      if (m.admin || user?.alias === 'admin') {
+        const controls = document.createElement('div');
+        controls.className = 'controls';
+        controls.innerHTML = `
+          <button class="btn-del" onclick="deleteMsg(${m.id})">Borrar</button>
+          <button class="btn-block" onclick="blockUser('${m.alias}')">Bloquear</button>
+        `;
+        d.appendChild(controls);
+      }
       chatBox.appendChild(d);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     async function sendMsg() {
@@ -743,8 +755,25 @@
         appendMsg(msg);
       }
       chatInput.value = '';
-      chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    window.deleteMsg = async (id) => {
+      if (online && supa) await supa.from('messages').delete().eq('id', id);
+      else {
+        const L = dbGet('messages').filter(m => m.id !== id);
+        dbSet('messages', L);
+      }
+      loadChat();
+      toast('Mensaje eliminado');
+    };
+
+    window.blockUser = async (alias) => {
+      let u = await getPlayer(alias);
+      if (!u) u = { alias, coins: 0, level: 1, blocked: false };
+      u.blocked = true;
+      await upsertPlayer(u);
+      toast(`Usuario ${alias} bloqueado`);
+    };
 
     // ===================== ADMIN =====================
     admExit.onclick = () => {
@@ -792,11 +821,6 @@
       await upsertPlayer(u);
       toast(u.blocked ? 'Usuario bloqueado' : 'Usuario desbloqueado');
     };
-    admClearChat.onclick = async () => {
-      if (online && supa) await supa.from('messages').delete().neq('id', -1);
-      else { dbSet('messages', []); chatBox.innerHTML = ''; }
-      toast('Chat limpio');
-    };
 
     // ===================== REALTIME =====================
     function subscribeRealtime() {
@@ -804,7 +828,10 @@
       try {
         supa.channel('chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
           appendMsg(payload.new);
-          chatBox.scrollTop = chatBox.scrollHeight;
+        }).subscribe();
+
+        supa.channel('chat').on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, () => {
+          loadChat();
         }).subscribe();
 
         supa.channel('players').on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
@@ -818,7 +845,6 @@
     btnLogout.onclick = doLogout;
     btnBet.onclick = () => { setBet(); toast('Apuesta lista'); renderQuestion(); };
     betInput.oninput = () => setBet();
-    btnNext.onclick = () => { if (!btnNext.classList.contains('disabled')) renderQuestion(); };
     chatSend.onclick = sendMsg;
     chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
   </script>
