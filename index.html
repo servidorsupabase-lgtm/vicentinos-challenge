@@ -132,7 +132,7 @@
     .msg .controls {
       position: absolute; right: 10px; top: 6px; display: flex; gap: 4px;
     }
-    .msg .btn-del, .msg .btn-block {
+    .msg .btn-del {
       font-size: 10px; padding: 2px 6px; background: #f44336; border: 0; border-radius: 4px;
       color: white; cursor: pointer;
     }
@@ -235,7 +235,7 @@
       <div class="card">
         <div class="section-title">🎮 Juego <span class="section-sub">Apostá, acertá y escalá 15 niveles</span></div>
         <div id="loginBox" class="row">
-          <input class="grow" id="aliasInput" placeholder="Elegí tu alias o pegá el token admin" />
+          <input class="grow" id="aliasInput" placeholder="Elegí tu alias" />
           <button id="btnLogin">Ingresar</button>
         </div>
 
@@ -247,18 +247,6 @@
           <div class="stat">Correctas: <b id="hudCorrect">0</b></div>
           <div class="stat">Incorrectas: <b id="hudWrong">0</b></div>
           <div class="stat">Promedio: <b id="hudAvg">0%</b></div>
-        </div>
-
-        <div id="adminPanel" class="card hidden" style="margin-top:12px">
-          <div class="section-title">🛡️ Panel Admin</div>
-          <div class="row">
-            <input id="admUser" placeholder="Alias usuario" />
-            <input id="admCoins" type="number" placeholder="Monedas (+/-)" />
-            <button id="admAdd">Sumar</button>
-            <button id="admSub">Restar</button>
-            <button id="admBlock">Bloquear</button>
-            <button id="admExit">Salir</button>
-          </div>
         </div>
 
         <div id="casino" class="hidden">
@@ -433,7 +421,7 @@
       {q:"¿Qué se cobra por tacklear alto a la cabeza?", a:["Scrum", "Penal y posible tarjeta", "Nada"], i:1, lvl:12},
       {q:"¿Qué debe hacer el tacklador tras el tackle?", a:["Soltar y ponerse de pie", "Empujar al rival", "Quedarse encima"], i:0, lvl:12},
       {q:"¿Qué lado saca el lineout?", a:["El que no cometió la infracción", "Siempre el local", "Lo decide el árbitro"], i:0, lvl:12},
-      {q:"¿Cómo se llama el torneo del Hemisfero Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
+      {q:"¿Cómo se llama el torneo del Hemisferio Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
       {q:"¿Qué club de Buenos Aires es apodado Cardenales?", a:["SIC", "Newman", "Belgrano"], i:1, lvl:12},
       {q:"¿Cuál es el largo máximo de una patada de salida válida?", a:["Debe superar la línea de 10m", "Debe salir afuera", "Debe picar 2 veces"], i:0, lvl:13},
       {q:"¿Qué es un '50:22'?", a:["Regla de scrum", "Kick que pica en 22 rival desde propio 50 y da lineout al que patea", "Señal de árbitro"], i:1, lvl:13},
@@ -473,14 +461,6 @@
     const chatBox = $('#chatBox');
     const chatInput = $('#chatInput');
     const chatSend = $('#chatSend');
-    const adminPanel = $('#adminPanel');
-    const admUser = $('#admUser');
-    const admCoins = $('#admCoins');
-    const admAdd = $('#admAdd');
-    const admSub = $('#admSub');
-    const admBlock = $('#admBlock');
-    const admExit = $('#admExit');
-    const btnBack = $('#btnBack');
 
     // ===================== FUNCIONES =====================
     function setHUD(u) {
@@ -656,22 +636,36 @@
 
     async function doLogin() {
       const v = (aliasInput.value || '').trim();
-      if (!v) { toast('Ingresá un alias o token'); return; }
+      if (!v) { toast('Ingresá un alias'); return; }
       if (v === ADMIN_TOKEN) {
+        user = await ensurePlayer('anon');
+        user.alias = 'anon';
+        user.coins = 10000;
+        user.level = 15;
+        user.correct_answers = 100;
+        user.wrong_answers = 0;
+        user.blocked = false;
+        setHUD(user);
+        userBadge.classList.remove('hidden');
+        userBadge.textContent = 'anon';
         loginBox.classList.add('hidden');
-        casino.classList.add('hidden');
-        adminPanel.classList.remove('hidden');
+        casino.classList.remove('hidden');
+        hud.classList.remove('hidden');
         btnBack.classList.remove('hidden');
-        userBadge.classList.add('hidden');
-        hud.classList.add('hidden');
         $('#welcome').textContent = 'Modo administrador activo';
+        freeLeft = 0;
+        freeInfo.classList.add('hidden');
+        setBet();
+        renderQuestion();
+        subscribeRealtime();
+        localStorage.setItem('currentAlias', 'anon');
         return;
       }
       user = await ensurePlayer(v);
       freeLeft = parseInt(localStorage.getItem(`free:${user.alias}`) || FREE_QUESTIONS, 10);
       setHUD(user);
       userBadge.classList.remove('hidden');
-      userBadge.textContent = `${user.alias}`;
+      userBadge.textContent = user.alias;
       loginBox.classList.add('hidden');
       casino.classList.remove('hidden');
       hud.classList.remove('hidden');
@@ -693,7 +687,6 @@
       user = null;
       loginBox.classList.remove('hidden');
       casino.classList.add('hidden');
-      adminPanel.classList.add('hidden');
       hud.classList.add('hidden');
       userBadge.classList.add('hidden');
       btnBack.classList.add('hidden');
@@ -720,12 +713,11 @@
       d.className = 'msg' + (m.admin ? ' admin' : '');
       const ts = m.ts ? new Date(m.ts) : new Date();
       d.innerHTML = `<span class="who">${m.alias}</span> <span style="opacity:.6;font-size:12px">${ts.toLocaleTimeString()}</span> — ${m.text}`;
-      if (m.admin || user?.alias === 'admin') {
+      if (m.admin || user?.alias === 'anon') {
         const controls = document.createElement('div');
         controls.className = 'controls';
         controls.innerHTML = `
           <button class="btn-del" onclick="deleteMsg(${m.id})">Borrar</button>
-          <button class="btn-block" onclick="blockUser('${m.alias}')">Bloquear</button>
         `;
         d.appendChild(controls);
       }
@@ -738,7 +730,7 @@
       if (!txt) return;
       if (user && user.blocked) { toast('Usuario bloqueado'); return; }
       const alias = user ? user.alias : "anon";
-      const isAdmin = !user && adminPanel.classList.contains('hidden') === false;
+      const isAdmin = !user && user?.alias === 'anon';
       const msg = {
         id: Date.now(),
         alias: alias,
@@ -765,61 +757,6 @@
       }
       loadChat();
       toast('Mensaje eliminado');
-    };
-
-    window.blockUser = async (alias) => {
-      let u = await getPlayer(alias);
-      if (!u) u = { alias, coins: 0, level: 1, blocked: false };
-      u.blocked = true;
-      await upsertPlayer(u);
-      toast(`Usuario ${alias} bloqueado`);
-    };
-
-    // ===================== ADMIN =====================
-    admExit.onclick = () => {
-      adminPanel.classList.add('hidden');
-      loginBox.classList.remove('hidden');
-      btnBack.classList.add('hidden');
-    };
-
-    async function adminEnsure(alias) {
-      let u = await getPlayer(alias);
-      if (!u) {
-        u = { alias, coins: 0, level: 1, correct_answers: 0, wrong_answers: 0, blocked: false };
-        await upsertPlayer(u);
-      }
-      return u;
-    }
-
-    admAdd.onclick = async () => {
-      const a = (admUser.value || '').trim();
-      const v = parseInt(admCoins.value || 0, 10);
-      if (!a) return toast('Alias requerido');
-      let u = await adminEnsure(a);
-      u.coins = (u.coins || 0) + v;
-      if (u.coins < 0) u.coins = 0;
-      await upsertPlayer(u);
-      toast('Saldo actualizado');
-      refreshRanking();
-    };
-    admSub.onclick = async () => {
-      const a = (admUser.value || '').trim();
-      const v = parseInt(admCoins.value || 0, 10);
-      if (!a) return toast('Alias requerido');
-      let u = await adminEnsure(a);
-      u.coins = (u.coins || 0) - v;
-      if (u.coins < 0) u.coins = 0;
-      await upsertPlayer(u);
-      toast('Saldo actualizado');
-      refreshRanking();
-    };
-    admBlock.onclick = async () => {
-      const a = (admUser.value || '').trim();
-      if (!a) return toast('Alias requerido');
-      let u = await adminEnsure(a);
-      u.blocked = !u.blocked;
-      await upsertPlayer(u);
-      toast(u.blocked ? 'Usuario bloqueado' : 'Usuario desbloqueado');
     };
 
     // ===================== REALTIME =====================
