@@ -7,7 +7,8 @@
   <meta name="theme-color" content="#0a2bff" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Cargar Supabase correctamente -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/browser/supabase.js"></script>
   <style>
     :root {
       --bg: #0c0f24;
@@ -202,7 +203,7 @@
       <div class="shine"></div>
     </div>
 
-    <!-- RANKING SIEMPRE VISIBLE -->
+    <!-- RANKING SIEMPRE VISIBLE Y ORDENADO -->
     <div class="card">
       <div class="section-title">🏆 Ranking <span class="section-sub">Promedio ponderado</span></div>
       <table class="table" id="rankTable">
@@ -309,7 +310,7 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (typeof createClient === 'undefined') {
-        console.error('❌ Supabase no se cargó.');
+        console.error('❌ Supabase no se cargó. Revisa la conexión.');
         toast('Error: no se pudo conectar al servidor');
         return;
       }
@@ -421,7 +422,7 @@
       {q:"¿Qué se cobra por tacklear alto a la cabeza?", a:["Scrum", "Penal y posible tarjeta", "Nada"], i:1, lvl:12},
       {q:"¿Qué debe hacer el tacklador tras el tackle?", a:["Soltar y ponerse de pie", "Empujar al rival", "Quedarse encima"], i:0, lvl:12},
       {q:"¿Qué lado saca el lineout?", a:["El que no cometió la infracción", "Siempre el local", "Lo decide el árbitro"], i:0, lvl:12},
-      {q:"¿Cómo se llama el torneo del Hemisferio Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
+      {q:"¿Cómo se llama el torneo del Hemisfero Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
       {q:"¿Qué club de Buenos Aires es apodado Cardenales?", a:["SIC", "Newman", "Belgrano"], i:1, lvl:12},
       {q:"¿Cuál es el largo máximo de una patada de salida válida?", a:["Debe superar la línea de 10m", "Debe salir afuera", "Debe picar 2 veces"], i:0, lvl:13},
       {q:"¿Qué es un '50:22'?", a:["Regla de scrum", "Kick que pica en 22 rival desde propio 50 y da lineout al que patea", "Señal de árbitro"], i:1, lvl:13},
