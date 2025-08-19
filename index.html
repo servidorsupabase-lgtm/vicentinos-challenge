@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vicentinos Challenge — Estilo Preguntados</title>
+  <title>Vicentinos Challenge</title>
   <meta name="theme-color" content="#0a2bff" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -43,11 +43,6 @@
       width: 36px; height: 36px; border-radius: 50%;
       background: conic-gradient(from 0deg, var(--accent), var(--primary), var(--accent-2), var(--accent));
       box-shadow: 0 0 0 3px rgba(255,255,255,.08);
-    }
-    .tag {
-      margin-left: 8px; padding: 2px 8px; border-radius: 999px;
-      background: linear-gradient(90deg, #1536a8, #1f6fff);
-      font-size: 12px; color: #fff; box-shadow: 0 2px 0 #0d1b6a;
     }
     .flex { display: flex; align-items: center; gap: 8px; }
     .badge {
@@ -164,12 +159,19 @@
       0%, 20%, 40%, 60%, 80%, 100% { transform: translateY(0); }
       10%, 30%, 50%, 70%, 90% { transform: translateY(-10px); }
     }
+
+    .back-btn {
+      font-size: 14px; padding: 6px 12px; margin-left: 10px;
+      background: #0e153f; border: 1px solid #2a3aa2;
+      border-radius: 8px; cursor: pointer;
+    }
+    .back-btn:hover { background: #1a2050; }
   </style>
 </head>
 <body>
   <header>
     <div class="nav container">
-      <div class="brand"><div class="logo"></div><div>Vicentinos Challenge</div><span class="tag">Estilo Preguntados</span></div>
+      <div class="brand"><div class="logo"></div><div>Vicentinos Challenge</div></div>
       <div class="rfloat flex">
         <div id="userBadge" class="badge hidden"></div>
         <button class="btn-ghost" id="btnLogout" style="display:none">Salir</button>
@@ -183,16 +185,41 @@
       <div class="shine"></div>
     </div>
 
-    <div id="welcome" class="welcome hidden">¡Bienvenido a Vicentinos Challenge! 🏉</div>
+    <!-- BOTONES DE PAGO (siempre visibles) -->
+    <div class="card" id="buySection">
+      <div class="section-title">💰 Compra monedas</div>
+      <div class="row">
+        <a href="https://mpago.la/16CyPeY" target="_blank" class="btn-ghost grow">Pack $2000 → 2000 monedas</a>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <a href="https://mpago.la/1TTVVcV" target="_blank" class="btn-ghost grow">Pack $5000 → 5000 monedas</a>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <a href="https://mpago.la/2HR6fjA" target="_blank" class="btn-ghost grow">Pack $10000 → 10000 monedas</a>
+      </div>
+    </div>
+
+    <!-- RANKING (siempre visible) -->
+    <div class="card">
+      <div class="section-title">🏆 Ranking <span class="section-sub">Promedio ponderado</span></div>
+      <table class="table" id="rankTable">
+        <thead><tr><th>#</th><th>Alias</th><th>Prom.</th><th>Nivel</th><th>Monedas</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="welcome" class="welcome">¡Bienvenido a Vicentinos Challenge! 🏉</div>
 
     <div class="grid">
-      <!-- Juego -->
+      <!-- JUEGO -->
       <div class="card">
         <div class="section-title">🎮 Juego <span class="section-sub">Apostá, acertá y escalá 15 niveles</span></div>
         <div id="loginBox" class="row">
           <input class="grow" id="aliasInput" placeholder="Elegí tu alias o pegá el token admin" />
           <button id="btnLogin">Ingresar</button>
         </div>
+
+        <button id="btnBack" class="back-btn hidden">← Volver al menú</button>
 
         <div id="hud" class="row hidden" style="margin-top:6px">
           <div class="stat">Nivel: <b id="hudLevel">1</b></div>
@@ -203,7 +230,7 @@
         </div>
 
         <div id="adminPanel" class="card hidden" style="margin-top:12px">
-          <div class="section-title">🛡️ Panel Admin <span class="lock">token activo</span></div>
+          <div class="section-title">🛡️ Panel Admin</div>
           <div class="row">
             <input id="admUser" placeholder="Alias usuario" />
             <input id="admCoins" type="number" placeholder="Monedas (+/-)" />
@@ -211,10 +238,10 @@
             <button id="admCreate" class="btn-alt">Crear</button>
             <button id="admDelete" class="btn-danger">Eliminar</button>
             <button id="admBlock" class="btn-ghost">Bloquear/Desbloquear</button>
-            <button id="admExit" class="btn-ghost">Volver</button>
           </div>
           <div class="row" style="margin-top:8px">
             <button id="admClearChat" class="btn-ghost">Limpiar chat</button>
+            <button id="admExit" class="btn-ghost">Volver</button>
           </div>
         </div>
 
@@ -231,29 +258,20 @@
           <div class="opts" id="optList"></div>
           <div class="row" style="margin-top:8px">
             <button id="btnNext" class="btn-ghost disabled">Siguiente</button>
-            <div class="rfloat flex links">
-              <a href="https://mpago.la/16CyPeY" target="_blank">Pack $2000 → 2000 monedas</a> ·
-              <a href="https://mpago.la/1TTVVcV" target="_blank">Pack $5000 → 5000 monedas</a> ·
-              <a href="https://mpago.la/2HR6fjA" target="_blank">Pack $10000 → 10000 monedas</a>
-            </div>
+            <button id="btnBackGame" class="back-btn">← Volver</button>
           </div>
         </div>
       </div>
 
-      <!-- Ranking + Chat -->
+      <!-- CHAT -->
       <div class="card">
-        <div class="section-title">🏆 Ranking <span class="section-sub">Promedio ponderado</span></div>
-        <table class="table" id="rankTable">
-          <thead><tr><th>#</th><th>Alias</th><th>Prom.</th><th>Nivel</th><th>Monedas</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <div class="hr"></div>
         <div class="section-title">💬 Chat</div>
         <div id="chatBox" class="chat"></div>
         <div class="row" style="margin-top:8px">
           <input id="chatInput" placeholder="Escribí un mensaje…" class="grow" />
           <button id="chatSend">Enviar</button>
         </div>
+        <button id="btnBackChat" class="back-btn" style="margin-top:8px">← Volver</button>
       </div>
     </div>
   </div>
@@ -402,7 +420,7 @@
       QUESTIONS.push(base[(QUESTIONS.length) % base.length]);
     }
 
-    // ===================== UI & LÓGICA =====================
+    // ===================== ELEMENTOS =====================
     const aliasInput = $('#aliasInput');
     const btnLogin = $('#btnLogin');
     const btnLogout = $('#btnLogout');
@@ -433,7 +451,11 @@
     const admBlock = $('#admBlock');
     const admExit = $('#admExit');
     const admClearChat = $('#admClearChat');
+    const btnBack = $('#btnBack');
+    const btnBackGame = $('#btnBackGame');
+    const btnBackChat = $('#btnBackChat');
 
+    // ===================== FUNCIONES =====================
     function setHUD(u) {
       $('#hudLevel').textContent = u.level || 1;
       levelChip.textContent = u.level || 1;
@@ -600,13 +622,12 @@
       if (!v) { toast('Ingresá un alias o token'); return; }
       if (v === ADMIN_TOKEN) {
         loginBox.classList.add('hidden');
-        adminPanel.classList.remove('hidden');
-        $('#welcome').classList.remove('hidden');
-        $('#welcome').textContent = 'Modo administrador activo';
-        $('#btnLogout').style.display = 'inline-block';
-        userBadge.classList.add('hidden');
         casino.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        btnBack.classList.remove('hidden');
+        userBadge.classList.add('hidden');
         hud.classList.add('hidden');
+        $('#welcome').textContent = 'Modo administrador activo';
         return;
       }
       user = await ensurePlayer(v);
@@ -617,7 +638,8 @@
       loginBox.classList.add('hidden');
       casino.classList.remove('hidden');
       hud.classList.remove('hidden');
-      $('#welcome').classList.remove('hidden');
+      btnBack.classList.remove('hidden');
+      $('#welcome').textContent = `¡Bienvenido, ${user.alias}!`;
       freeLeftEl.textContent = freeLeft;
       freeInfo.classList.toggle('hidden', freeLeft <= 0);
       setBet();
@@ -629,12 +651,13 @@
     function doLogout() {
       user = null;
       loginBox.classList.remove('hidden');
-      adminPanel.classList.add('hidden');
       casino.classList.add('hidden');
+      adminPanel.classList.add('hidden');
       hud.classList.add('hidden');
       userBadge.classList.add('hidden');
+      btnBack.classList.add('hidden');
+      $('#welcome').textContent = '¡Bienvenido a Vicentinos Challenge! 🏉';
       $('#btnLogout').style.display = 'none';
-      $('#welcome').classList.add('hidden');
     }
 
     // ===================== CHAT =====================
@@ -663,12 +686,14 @@
       const txt = (chatInput.value || '').trim();
       if (!txt) return;
       if (user && user.blocked) { toast('Usuario bloqueado'); return; }
+      const alias = user ? user.alias : "anon";
+      const isAdmin = !user && adminPanel.classList.contains('hidden') === false;
       const msg = {
         id: Date.now(),
-        alias: user ? user.alias : "anon",
+        alias: alias,
         text: txt,
         ts: new Date().toISOString(),
-        admin: !user && adminPanel && !loginBox.classList.contains('hidden')
+        admin: isAdmin
       };
       if (online && supa) {
         await supa.from('messages').insert(msg);
@@ -686,6 +711,7 @@
     admExit.onclick = () => {
       adminPanel.classList.add('hidden');
       loginBox.classList.remove('hidden');
+      btnBack.classList.add('hidden');
     };
 
     async function adminEnsure(alias) {
@@ -752,8 +778,17 @@
       } catch (e) { console.error(e); }
     }
 
+    // ===================== BOTONES DE VUELTA =====================
+    btnBack.onclick = doLogout;
+    btnBackGame.onclick = doLogout;
+    btnBackChat.onclick = doLogout;
+
     // ===================== INIT =====================
     (async function () {
+      $('#btnLogout').style.display = 'none';
+      await loadChat();
+      await refreshRanking();
+
       btnLogin.onclick = doLogin;
       btnLogout.onclick = doLogout;
       btnBet.onclick = () => { setBet(); toast('Apuesta lista'); renderQuestion(); };
@@ -762,8 +797,6 @@
       chatSend.onclick = sendMsg;
       chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
 
-      await loadChat();
-      await refreshRanking();
       freeInfo.classList.add('hidden');
     })();
   </script>
