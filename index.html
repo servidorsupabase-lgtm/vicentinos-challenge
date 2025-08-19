@@ -1,277 +1,568 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Vicentinos Challenge</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0; padding: 0;
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      display: flex; justify-content: center; align-items: center;
-      min-height: 100vh; color: #333;
-    }
-    .container {
-      width: 95%; max-width: 1000px;
-      background: #fff; border-radius: 16px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-      padding: 30px; text-align: center;
-    }
-    h1 { color: #444; margin-bottom: 10px; }
-    h2 { color: #555; }
-    .btn {
-      padding: 12px 25px; margin: 8px;
-      border-radius: 50px; border: none;
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      color: white; font-weight: bold;
-      cursor: pointer; transition: 0.2s;
-    }
-    .btn:hover { transform: scale(1.05); }
-    .btn-danger { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
-    .section { display: none; }
-    .active { display: block; }
-    #question-card {
-      background: #f7f9fc; padding: 20px; border-radius: 12px;
-      margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    #options .btn { width: 80%; max-width: 400px; display: block; margin: 12px auto; }
-    #timer-bar { width: 100%; background: #ddd; border-radius: 10px; overflow: hidden; margin: 15px 0; }
-    #timer-fill { height: 12px; width: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); transition: width 1s linear; }
-    #ranking-list { text-align: left; margin-top: 20px; }
-    #ranking-list li {
-      background: #f1f1f1; margin: 6px 0; padding: 8px 12px;
-      border-radius: 8px; display: flex; justify-content: space-between;
-    }
-    #chat-box { max-height: 250px; overflow-y: auto; border: 1px solid #ccc; border-radius: 10px; padding: 10px; background: #fafafa; text-align: left; }
-    .msg { margin: 5px 0; padding: 8px 12px; border-radius: 12px; max-width: 70%; clear: both; }
-    .msg.self { background: #4facfe; color: #fff; float: right; }
-    .msg.other { background: #eee; float: left; }
-    .msg.admin { background: #ff9800; color: #fff; float: left; }
-    #notification {
-      position: fixed; top: 20px; right: 20px;
-      background: #333; color: white;
-      padding: 12px 20px; border-radius: 8px;
-      display: none;
-    }
-    #notification.success { background: #4caf50; }
-    #notification.error { background: #f44336; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vicentinos Challenge — Estilo Preguntados</title>
+<meta name="theme-color" content="#0a2bff" />
+<link rel="preconnect" href="https://fonts.gstatic.com  " crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="  https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2  "></script>
+<style>
+/* ===================== ESTILO COMPLETO ===================== */
+:root{
+  --bg:#0c0f24;        /* fondo gamer/casino */
+  --card:#111537;      /* cartas */
+  --card-2:#0f1330;    /* cartas secundarias */
+  --primary:#1f6fff;   /* azul vibrante */
+  --accent:#ff7a18;    /* naranja casino */
+  --accent-2:#ffb703;  /* dorado */
+  --ok:#19d47b;
+  --bad:#f44336;
+  --text:#f2f6ff;
+  --muted:#98a2b3;
+  --ring: 0 0 0 3px rgba(31,111,255,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background: radial-gradient(1200px 800px at 10% -10%, #122261 0%, transparent 60%),
+                  radial-gradient(1000px 700px at 120% 0%, #1a336e 0%, transparent 60%),
+                  var(--bg);
+  font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  color: var(--text);
+}
+.container{max-width:1100px;margin:0 auto;padding:16px}
+header{position:sticky;top:0;z-index:50;background:rgba(12,15,36,.75);backdrop-filter: blur(8px);border-bottom:1px solid #1b2250}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
+.logo{width:36px;height:36px;border-radius:50%;background: conic-gradient(from 0deg, var(--accent), var(--primary), var(--accent-2), var(--accent));box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+.tag{margin-left:8px;padding:2px 8px;border-radius:999px;background:linear-gradient(90deg,#1536a8,#1f6fff);font-size:12px;color:#fff;box-shadow:0 2px 0 #0d1b6a}
+.flex{display:flex;align-items:center;gap:8px}
+.badge{font-size:12px;background:#0f1330;border:1px solid #203089;padding:6px 10px;border-radius:999px}
+.hidden{display:none!important}
+
+.banner{position:relative;height:210px;border-radius:16px;overflow:hidden;margin:16px 0;box-shadow:0 10px 40px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.06) inset}
+.banner img{width:100%;height:100%;object-fit:cover;filter:saturate(1.1) contrast(1.05)}
+.banner .shine{position:absolute;inset:0;background: radial-gradient(650px 140px at 60% -20%, rgba(255,255,255,.18), transparent 50%), radial-gradient(900px 200px at -10% 120%, rgba(255,255,255,.12), transparent 50%)}
+
+.grid{display:grid;grid-template-columns: 1.4fr .9fr;gap:16px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+.card{background:linear-gradient(180deg, rgba(23,30,84,.65), rgba(16,19,48,.65));border:1px solid #202a6a;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.section-title{font-weight:800;margin-bottom:8px}
+.section-sub{color:var(--muted);font-weight:600;font-size:.9rem}
+.row{display:flex;gap:8px;align-items:center}
+.grow{flex:1}
+input,button,.btn{font-family:inherit}
+input{background:#0d1336;border:1px solid #24308a;color:var(--text);border-radius:12px;padding:10px 12px;outline:none}
+input:focus{box-shadow:var(--ring);border-color:#2f51ff}
+button{background:linear-gradient(180deg,#2454ff,#173ee2);border:0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;box-shadow:0 6px 0 #0d2aa3}
+button:active{transform:translateY(1px);box-shadow:0 4px 0 #0d2aa3}
+.btn-alt{background:linear-gradient(180deg,#ff8a25,#ff6d00);box-shadow:0 6px 0 #b74a00}
+.btn-ghost{background:#0e153f;border:1px solid #2a3aa2;box-shadow:none}
+.btn-danger{background:linear-gradient(180deg,#ff5a5a,#e12f2f);box-shadow:0 6px 0 #9c1d1d}
+.lock{font-size:12px;background:#13206b;border:1px solid #2840b4;color:#d2dcff;padding:2px 8px;border-radius:999px}
+.stat{background:#0e153f;border:1px solid #24308a;color:#d9e3ff;border-radius:12px;padding:8px 10px;font-weight:700}
+.level-chip{background:linear-gradient(180deg,#1b2ea8,#2847ff);border:0;box-shadow:0 4px 0 #0d1b6a}
+
+.qbox{background:linear-gradient(180deg,#0f143e,#0b0f2f);border:1px solid #26358a;border-radius:14px;padding:14px;font-weight:700;min-height:64px;display:flex;align-items:center}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media (max-width:720px){.opts{grid-template-columns:1fr}}
+.opt{background:#0e153f;border:1px solid #2a3aa2;border-radius:12px;padding:10px;font-weight:700;cursor:pointer;transition:transform .08s}
+.opt:hover{transform:translateY(-1px)}
+.opt.correct{border-color:#1ec77d;background:linear-gradient(180deg,#0f2c2a,#0b1e1d)}
+.opt.wrong{border-color:#ff5454;background:linear-gradient(180deg,#2a0f16,#1d0b0e)}
+.opt.disabled{opacity:.6;pointer-events:none}
+.disabled{opacity:.6;pointer-events:none}
+
+.timer{height:8px;background:#0d1240;border-radius:999px;border:1px solid #23318f;margin:12px 0;overflow:hidden}
+#timerBar{height:100%;width:0;background:linear-gradient(90deg,#26ffb8,#1f6fff)}
+
+.table{width:100%;border-collapse:collapse;margin-top:8px}
+.table th,.table td{border-bottom:1px solid #22307a;padding:8px;text-align:left}
+.table tbody tr:hover{background:rgba(255,255,255,.04)}
+
+.chat{height:260px;overflow:auto;border:1px solid #22307a;border-radius:12px;padding:10px;background:#0d1336}
+.msg{margin:6px 0}
+.msg .who{font-weight:700;margin-right:6px}
+.msg.admin{color:#ffd782}
+
+.hr{height:1px;background:#22307a;margin:12px 0}
+.welcome{font-weight:800;text-align:center;margin:10px 0;color:#e8eeff}
+
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0e153f;border:1px solid #2a3aa2;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+
+.links a{color:#cfe2ff;text-decoration:none}
+.links a:hover{text-decoration:underline}
+
+/* apuesta rueda */
+.wheel{position:relative;height:140px;border-radius:16px;background:conic-gradient(from 0deg,#1f6fff 0 25%, #ff7a18 0 50%, #1f6fff 0 75%, #ffb703 0 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(0,0,0,.42), inset 0 0 0 10px rgba(0,0,0,.18)}
+.wheel .center{background:#0e153f;border:2px solid #2a3aa2;border-radius:14px;padding:10px 14px;text-align:center}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Vicentinos Challenge 🏉</h1>
-
-    <!-- LOGIN -->
-    <div id="login-section" class="section active">
-      <h2>Iniciar Sesión</h2>
-      <input type="text" id="alias" placeholder="Alias"><br>
-      <input type="password" id="password" placeholder="Contraseña / Token"><br>
-      <button class="btn" onclick="login()">Entrar</button>
-      <button class="btn" onclick="register()">Registrarse</button>
-    </div>
-
-    <!-- JUEGO -->
-    <div id="game-section" class="section">
-      <h2>Nivel <span id="current-level"></span></h2>
-      <div id="timer-bar"><div id="timer-fill"></div></div>
-      <div id="question-card">
-        <p id="question"></p>
-        <div id="options"></div>
-      </div>
-      <button class="btn" onclick="showSection('menu-section')">Menú Principal</button>
-    </div>
-
-    <!-- MENÚ PRINCIPAL -->
-    <div id="menu-section" class="section">
-      <h2>Menú Principal</h2>
-      <button class="btn" onclick="showSection('game-section')">▶️ Jugar</button>
-      <button class="btn" onclick="loadRanking()">🏆 Ranking</button>
-      <button class="btn" onclick="loadChat()">💬 Chat</button>
-      <button class="btn" onclick="showSection('packs-section')">💵 Comprar Pack</button>
-    </div>
-
-    <!-- RANKING -->
-    <div id="ranking-section" class="section">
-      <h2>🏆 Ranking</h2>
-      <ul id="ranking-list"></ul>
-      <button class="btn" onclick="showSection('menu-section')">Menú Principal</button>
-    </div>
-
-    <!-- CHAT -->
-    <div id="chat-section" class="section">
-      <h2>💬 Chat</h2>
-      <div id="chat-box"></div>
-      <input type="text" id="chat-msg" placeholder="Escribir mensaje...">
-      <button class="btn" onclick="sendMessage()">Enviar</button>
-      <button class="btn" onclick="showSection('menu-section')">Menú Principal</button>
-    </div>
-
-    <!-- PACKS -->
-    <div id="packs-section" class="section">
-      <h2>Comprar Pack</h2>
-      <p>Selecciona un pack para seguir jugando:</p>
-      <a href="https://mpago.la/16CyPeY" target="_blank" class="btn">$2000 → 2000 monedas</a>
-      <a href="https://mpago.la/1TTVVcV" target="_blank" class="btn">$5000 → 5000 monedas</a>
-      <a href="https://mpago.la/2HR6fjA" target="_blank" class="btn">$10000 → 10000 monedas</a>
-      <button class="btn" onclick="showSection('menu-section')">Menú Principal</button>
-    </div>
-
-    <!-- ADMIN -->
-    <div id="admin-section" class="section">
-      <h2>⚙️ Panel Admin</h2>
-      <input type="text" id="admin-alias" placeholder="Alias usuario">
-      <input type="number" id="admin-amount" placeholder="Monto">
-      <button class="btn" onclick="sumarMonedas()">➕ Sumar</button>
-      <button class="btn btn-danger" onclick="restarMonedas()">➖ Restar</button>
-      <button class="btn" onclick="showNotificationGlobal()">📢 Notificar a todos</button>
-      <button class="btn" onclick="showSection('menu-section')">Menú Principal</button>
+<header>
+  <div class="nav container">
+    <div class="brand"><div class="logo"></div><div>Vicentinos Challenge</div><span class="tag">Estilo Preguntados</span></div>
+    <div class="rfloat flex">
+      <div id="userBadge" class="badge hidden"></div>
+      <button class="btn-ghost" id="btnLogout" style="display:none">Salir</button>
     </div>
   </div>
+</header>
 
-  <div id="notification"></div>
+<div class="container">
+  <div class="banner">
+    <img src="https://i.ibb.co/kVGptVnJ/wp2896798.jpg  " alt="banner rugby">
+    <div class="shine"></div>
+  </div>
 
-  <script>
-    const supabaseUrl = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
-    const supabaseKey = "TU_ANON_KEY_AQUI";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  <div id="welcome" class="welcome hidden">¡Bienvenido a Vicentinos Challenge! 🏉</div>
 
-    let currentUser = null;
-    let currentLevel = 1;
-    let currentQuestion = null;
-    let timerInterval = null;
-    let freeQuestions = 3;
+  <div class="grid">
+    <!-- Juego -->
+    <div class="card">
+      <div class="section-title">🎮 Juego <span class="section-sub">Apostá, acertá y escalá 15 niveles</span></div>
+      <div id="loginBox" class="row">
+        <input class="grow" id="aliasInput" placeholder="Elegí tu alias o pegá el token admin" />
+        <button id="btnLogin">Ingresar</button>
+      </div>
 
-    function showSection(id) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
+      <div id="hud" class="row hidden" style="margin-top:6px">
+        <div class="stat">Nivel: <b id="hudLevel">1</b></div>
+        <div class="stat">Monedas: <b id="hudCoins">0</b></div>
+        <div class="stat">Correctas: <b id="hudCorrect">0</b></div>
+        <div class="stat">Incorrectas: <b id="hudWrong">0</b></div>
+        <div class="stat">Promedio: <b id="hudAvg">0%</b></div>
+      </div>
 
-    function showNotification(msg, type="success") {
-      const n = document.getElementById("notification");
-      n.textContent = msg;
-      n.className = type;
-      n.style.display = "block";
-      setTimeout(() => n.style.display = "none", 2000);
-    }
+      <div id="adminPanel" class="card hidden" style="margin-top:12px">
+        <div class="section-title">🛡️ Panel Admin <span class="lock">token activo</span></div>
+        <div class="row">
+          <input id="admUser" placeholder="Alias usuario" />
+          <input id="admCoins" type="number" placeholder="Monedas (+/-)" />
+          <button id="admAdd">Sumar/Restar</button>
+          <button id="admCreate" class="btn-alt">Crear</button>
+          <button id="admDelete" class="btn-danger">Eliminar</button>
+          <button id="admBlock" class="btn-ghost">Bloquear/Desbloquear</button>
+          <button id="admExit" class="btn-ghost">Volver</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="admClearChat" class="btn-ghost">Limpiar chat</button>
+        </div>
+      </div>
 
-    async function register() {
-      const alias = document.getElementById("alias").value;
-      const password = document.getElementById("password").value;
-      await supabase.from("usuarios").insert([{ alias, password }]);
-      showNotification("Registro exitoso!");
-    }
+      <div id="casino" class="hidden">
+        <div class="wheel"><div class="center"><div style="font-size:12px;opacity:.8">Apuesta</div><div id="wheelBet" style="font-size:18px">500</div></div></div>
+        <div class="row">
+          <input id="betInput" type="number" min="500" step="100" placeholder="Apuesta mínima $500" class="grow" />
+          <button id="btnBet" class="btn-alt">Confirmar apuesta</button>
+          <div class="stat rfloat level-chip">Nivel <span id="levelChip">1</span>/15</div>
+        </div>
+        <div id="freeInfo" class="notif hidden">Tenés <b id="freeLeft">3</b> preguntas gratis sin apostar.</div>
+        <div class="timer"><div id="timerBar"></div></div>
+        <div class="qbox" id="qText">Elegí apuesta y arrancamos…</div>
+        <div class="opts" id="optList"></div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnNext" class="btn-ghost disabled">Siguiente</button>
+          <div class="rfloat flex links">
+            <a href="https://mpago.la/16CyPeY  " target="_blank" rel="noopener">Pack $2000 → 2000 monedas</a> ·
+            <a href="https://mpago.la/1TTVVcV  " target="_blank" rel="noopener">Pack $5000 → 5000 monedas</a> ·
+            <a href="https://mpago.la/2HR6fjA  " target="_blank" rel="noopener">Pack $10000 → 10000 monedas</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    async function login() {
-      const alias = document.getElementById("alias").value;
-      const password = document.getElementById("password").value;
-      if (password === "20250819802006") {
-        currentUser = { alias: "Admin" };
-        showSection("admin-section");
-        return;
-      }
-      const { data } = await supabase.from("usuarios").select("*").eq("alias", alias).eq("password", password).single();
-      if (!data) { showNotification("Login incorrecto","error"); return; }
-      currentUser = data;
-      showNotification("Bienvenido " + alias);
-      showSection("menu-section");
-    }
+    <!-- Ranking + Chat -->
+    <div class="card">
+      <div class="section-title">🏆 Ranking <span class="section-sub">Promedio ponderado</span></div>
+      <table class="table" id="rankTable">
+        <thead><tr><th>#</th><th>Alias</th><th>Prom.</th><th>Nivel</th><th>Monedas</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hr"></div>
+      <div class="section-title">💬 Chat</div>
+      <div id="chatBox" class="chat"></div>
+      <div class="row" style="margin-top:8px">
+        <input id="chatInput" placeholder="Escribí un mensaje…" class="grow" />
+        <button id="chatSend">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-    async function loadQuestion() {
-      if (freeQuestions <= 0 && currentUser.monedas <= 0) {
-        showNotification("Debes comprar un pack para seguir","error");
-        showSection("packs-section");
-        return;
-      }
-      const { data } = await supabase.from("preguntas").select("*").eq("nivel", currentLevel);
-      currentQuestion = data[Math.floor(Math.random()*data.length)];
-      document.getElementById("current-level").textContent = currentLevel;
-      document.getElementById("question").textContent = currentQuestion.pregunta;
-      const options = JSON.parse(currentQuestion.opciones);
-      const optionsEl = document.getElementById("options");
-      optionsEl.innerHTML = "";
-      options.forEach((opt,i)=>{
-        const btn=document.createElement("button");
-        btn.className="btn"; btn.textContent=opt;
-        btn.onclick=()=>checkAnswer(i);
-        optionsEl.appendChild(btn);
-      });
-      startTimer();
-    }
+<div class="toast" id="toast"></div>
 
-    function startTimer() {
-      let time=20; const bar=document.getElementById("timer-fill");
-      clearInterval(timerInterval);
-      timerInterval=setInterval(()=>{
-        time--; bar.style.width=(time/20*100)+"%";
-        if(time<=0){ clearInterval(timerInterval); nextQuestion(false); }
-      },1000);
-    }
+<script>
+/* ===================== CONFIG ===================== */
+// ⚠️ Pegá tu URL/KEY de Supabase para habilitar ranking/chat globales.
+// Si se dejan vacíos o fallan las llamadas, el juego usa localStorage.
+const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co  "; // de tu archivo
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY"; // <-- pega aquí tu anon key completa
+const ADMIN_TOKEN = "20250819802006"; // token admin
+const MIN_BET = 500;
+const FREE_QUESTIONS = 3;
+const TOTAL_LEVELS = 15;
+const QUESTIONS_PER_LEVEL = 5; // 15 x 5 = 75; los 5 restantes se sortean como bonus
+const TIME_PER_QUESTION = 20; // seg
 
-    function checkAnswer(i) {
-      clearInterval(timerInterval);
-      let apuesta = 100;
-      if (freeQuestions>0) { freeQuestions--; apuesta=0; }
-      if (i===currentQuestion.correcta) {
-        currentUser.monedas += apuesta;
-        currentLevel++;
-        showNotification("✅ Correcto! Ganaste "+apuesta+" monedas");
-      } else {
-        currentUser.monedas -= apuesta;
-        showNotification("❌ Incorrecto! Perdiste "+apuesta+" monedas","error");
-      }
-      if(currentUser.monedas<=0 && freeQuestions<=0){
-        showNotification("Sin monedas! Compra un pack.","error");
-        showSection("packs-section");
-        return;
-      }
-      setTimeout(loadQuestion,1500);
-    }
+/* ===================== HELPERS ===================== */
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
+const wait = ms=>new Promise(r=>setTimeout(r, ms));
+const fmt = n=> new Intl.NumberFormat('es-AR').format(n);
+function toast(msg, ms=2200){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), ms); }
 
-    async function loadRanking() {
-      const { data } = await supabase.from("ranking").select("*").order("puntaje",{ascending:false});
-      const list=document.getElementById("ranking-list");
-      list.innerHTML=""; data.forEach(r=>{ const li=document.createElement("li"); li.textContent=r.alias+" - "+r.puntaje; list.appendChild(li); });
-      showSection("ranking-section");
-    }
+/* ===================== STORAGE (fallback) ===================== */
+function dbGet(key){ return JSON.parse(localStorage.getItem(key)||'[]'); }
+function dbSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
-    async function sendMessage() {
-      const msg=document.getElementById("chat-msg").value; if(!msg)return;
-      await supabase.from("chat").insert([{ alias: currentUser.alias, mensaje: msg }]);
-      document.getElementById("chat-msg").value=""; loadChat();
-    }
+/* ===================== SUPABASE ===================== */
+let supa = null; let online=false;
+try{
+  if(SUPABASE_URL && SUPABASE_KEY){
+    supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{autoRefreshToken:false,persistSession:false}});
+    online = true;
+  }
+}catch(e){ online=false; }
 
-    async function loadChat() {
-      const { data } = await supabase.from("chat").select("*").order("creado_en",{ascending:true});
-      const box=document.getElementById("chat-box"); box.innerHTML="";
-      data.forEach(m=>{
-        const div=document.createElement("div");
-        div.className="msg "+(m.alias===currentUser.alias?"self":(m.alias.includes("Vicentinos")?"admin":"other"));
-        div.textContent=m.alias+": "+m.mensaje;
-        box.appendChild(div);
-      });
-      box.scrollTop=box.scrollHeight;
-      showSection("chat-section");
-    }
+/* ===================== ESTADO ===================== */
+let user=null; // {alias, coins, level, correct_answers, wrong_answers, blocked}
+let freeLeft = FREE_QUESTIONS;
+let currentQ=null; let currentBet=MIN_BET; let timer=null; let timeLeft=TIME_PER_QUESTION; let asked=new Set(); let levelCount=0;
 
-    async function sumarMonedas() {
-      const usuario=document.getElementById("admin-alias").value;
-      const monto=parseInt(document.getElementById("admin-amount").value);
-      await supabase.rpc("sumar_monedas",{usuario,monto}); showNotification("Monedas sumadas!");
-    }
+/* ===================== PREGUNTAS (80) ===================== */
+// Cada obj: {q, a:[op1, op2, op3], i:indexCorrecto (0..2), lvl:1..15}
+const QUESTIONS = [
+  {q:"¿Cuántos jugadores tiene un equipo de rugby union en cancha?", a:["13", "15", "11"], i:1, lvl:1},
+  {q:"¿Cómo se llama el puntaje obtenido al apoyar la pelota en el in-goal rival?", a:["Try", "Drop", "Scrum"], i:0, lvl:1},
+  {q:"¿Cuántos puntos vale un try en rugby union desde 1992?", a:["4", "5", "6"], i:1, lvl:1},
+  {q:"¿Qué tarjeta indica expulsión definitiva?", a:["Amarilla", "Roja", "Azul"], i:1, lvl:1},
+  {q:"¿Cómo se reinicia el juego tras un pase hacia adelante accidental?", a:["Lineout", "Scrum", "Kick-off"], i:1, lvl:1},
+  {q:"¿Qué país ganó la primera Copa del Mundo (1987)?", a:["Nueva Zelanda", "Sudáfrica", "Australia"], i:0, lvl:2},
+  {q:"¿Cómo se llama el tiro de bote pronto con el pie que vale 3 puntos?", a:["Drop goal", "Punt", "Grubber"], i:0, lvl:2},
+  {q:"¿Qué posición suele usar el número 10?", a:["Apertura", "Hooker", "Wing"], i:0, lvl:2},
+  {q:"¿Cuántos árbitros de campo hay en rugby union?", a:["1", "2", "3"], i:0, lvl:2},
+  {q:"¿Qué indica un pase hacia adelante?", a:["Penal", "Scrum", "Lineout"], i:1, lvl:2},
+  {q:"¿Cómo se llama el agrupamiento para disputar la pelota tras un tackle?", a:["Maul", "Ruck", "Melee"], i:1, lvl:3},
+  {q:"¿Qué es un maul?", a:["Agrupamiento de pie empujando", "Pelota al piso post-tackle", "Saque lateral"], i:0, lvl:3},
+  {q:"¿Qué jugador lanza la pelota en un lineout?", a:["Pilar", "Hooker", "Medio scrum"], i:1, lvl:3},
+  {q:"¿Cuántos puntos vale una conversión?", a:["2", "3", "1"], i:0, lvl:3},
+  {q:"¿Qué infracción sanciona un offside?", a:["Avance", "Fuera de juego", "Juego peligroso"], i:1, lvl:3},
+  {q:"¿Qué selección es conocida como los All Blacks?", a:["Gales", "Nueva Zelanda", "Escocia"], i:1, lvl:4},
+  {q:"¿Cómo se denomina al número 9?", a:["Wing", "Medio scrum", "Centro"], i:1, lvl:4},
+  {q:"¿Qué hace el TMO?", a:["Juzga videos", "Controla offside en vivo", "Cronometra"], i:0, lvl:4},
+  {q:"¿Qué equipo argentino compite en el Súper Rugby Américas como franquicia nacional?", a:["Ceibos", "Pampas", "Jaguares XV"], i:1, lvl:4},
+  {q:"¿Cuántos cambios tácticos se permiten por equipo en test matches?", a:["8", "6", "10"], i:0, lvl:4},
+  {q:"¿Qué significa 'knock-on'?", a:["Pase largo", "Adelantar la pelota con la mano/brazo", "Pisar la línea"], i:1, lvl:5},
+  {q:"¿Cómo se reanuda tras un knock-on?", a:["Scrum", "Penal", "Lineout"], i:0, lvl:5},
+  {q:"¿Cuántos pilares hay en la primera línea?", a:["1", "2", "3"], i:1, lvl:5},
+  {q:"¿Qué posición usa el número 15?", a:["Fullback", "Wing", "Centro"], i:0, lvl:5},
+  {q:"¿Qué país es apodado los Springboks?", a:["Inglaterra", "Sudáfrica", "Irlanda"], i:1, lvl:5},
+  {q:"¿Qué torneo del Hemisferio Norte reúne a seis selecciones europeas?", a:["Tri Nations", "Seis Naciones", "Nations Cup"], i:1, lvl:6},
+  {q:"¿Qué selección argentina es conocida como Los Pumas?", a:["M20", "Mayor", "Seven"], i:1, lvl:6},
+  {q:"¿Qué hace el hooker en el scrum?", a:["Patea la pelota hacia atrás", "Empuja desde afuera", "Dirige la línea"], i:0, lvl:6},
+  {q:"¿Cuándo se marca un penal try?", a:["Falta táctica que evita try probable", "Try con patada", "Choque peligroso"], i:0, lvl:6},
+  {q:"¿Cuánto vale un penal convertido a los palos?", a:["2", "3", "4"], i:1, lvl:6},
+  {q:"¿Qué club argentino está en San Isidro y es cuna de muchos Pumas?", a:["CASI", "Newman", "La Plata RC"], i:0, lvl:7},
+  {q:"¿Quién fue el histórico apertura de Los Pumas que jugó en Stade Français y Racing 92?", a:["Juan Martín Hernández", "Nicolás Sánchez", "Felipe Contepomi"], i:2, lvl:7},
+  {q:"¿Qué indica el árbitro con el brazo en horizontal?", a:["Ventaja", "Scrum", "Tiempo"], i:0, lvl:7},
+  {q:"¿Qué es un 'mark' en el in-goal propio?", a:["Pedido de scrum", "Pique libre tras atrapar un kick", "Tiempo muerto"], i:1, lvl:7},
+  {q:"¿Qué selección ganó el Mundial 2019?", a:["Inglaterra", "Sudáfrica", "Nueva Zelanda"], i:1, lvl:7},
+  {q:"¿Cuál es la distancia mínima para un lineout?", a:["5 metros", "10 metros", "15 metros"], i:0, lvl:8},
+  {q:"¿Qué indica el gesto de 'cuadrado' del árbitro hacia el TMO?", a:["Revisión de try", "Cambio", "Fuera de juego"], i:0, lvl:8},
+  {q:"¿Qué se sanciona por ingresar de costado a un ruck?", a:["Scrum", "Penal", "Free kick"], i:1, lvl:8},
+  {q:"¿Quién es el capitán histórico de Los Pumas en 2007?", a:["Agustín Pichot", "Juan Leguizamón", "Mario Ledesma"], i:0, lvl:8},
+  {q:"¿Qué valor tiene un drop goal?", a:["1", "2", "3"], i:2, lvl:8},
+  {q:"¿Qué selección es apodada Wallabies?", a:["Australia", "Italia", "Tonga"], i:0, lvl:9},
+  {q:"¿Cuál es la amplitud mínima del canal de lineout?", a:["1 metro", "3 metros", "0.5 metros"], i:0, lvl:9},
+  {q:"¿Qué jugador suele usar el número 7?", a:["Wing", "Tercera línea", "Centro"], i:1, lvl:9},
+  {q:"¿Qué equipo argentino profesional compitió como Jaguares en Super Rugby?", a:["Club Jaguares", "Franquicia de UAR", "Pampas XV provincial"], i:1, lvl:9},
+  {q:"¿Qué es un 'knock-on intencional'?", a:["Interceptar ilegalmente desviando hacia adelante", "Golpear con el pie", "Tocar lateral"], i:0, lvl:9},
+  {q:"¿Qué país organiza el Top 14?", a:["Inglaterra", "Francia", "Irlanda"], i:1, lvl:10},
+  {q:"¿Cuál es la función principal del medio scrum?", a:["Conectar forwards y backs", "Patear todo", "Defender último"], i:0, lvl:10},
+  {q:"¿Qué infracción es levantar los pies del pilar rival en el scrum?", a:["Penal", "Free kick", "Nada"], i:0, lvl:10},
+  {q:"¿Qué equipo argentino tiene estadio en Vélez y llegó a la final 2019 del SR?", a:["Pumas", "Jaguares", "Pampas"], i:1, lvl:10},
+  {q:"¿Cuántos puntos suma un try penal?", a:["5 + conversión automática", "7 directos", "6 con drop"], i:1, lvl:10},
+  {q:"¿Qué selección es apodada Le Bleus?", a:["Italia", "Irlanda", "Francia"], i:2, lvl:11},
+  {q:"¿Qué define el árbitro al decir 'use it' en un ruck/maul?", a:["Soltar la pelota", "Usar la pelota en 5 segundos", "Patear al touch"], i:1, lvl:11},
+  {q:"¿Qué es 'advantage over'?", a:["Se acabó la ventaja", "Hay nueva ventaja", "Penal directo"], i:0, lvl:11},
+  {q:"¿Qué jugador argentino es goleador histórico de Los Pumas?", a:["Nicolás Sánchez", "Hernández", "Contepomi"], i:0, lvl:11},
+  {q:"¿Qué equipo ganó el Mundial 2015?", a:["Nueva Zelanda", "Australia", "Sudáfrica"], i:0, lvl:11},
+  {q:"¿Qué se cobra por tacklear alto a la cabeza?", a:["Scrum", "Penal y posible tarjeta", "Nada"], i:1, lvl:12},
+  {q:"¿Qué debe hacer el tacklador tras el tackle?", a:["Soltar y ponerse de pie", "Empujar al rival", "Quedarse encima"], i:0, lvl:12},
+  {q:"¿Qué lado saca el lineout?", a:["El que no cometió la infracción", "Siempre el local", "Lo decide el árbitro"], i:0, lvl:12},
+  {q:"¿Cómo se llama el torneo del Hemisferio Sur de selecciones?", a:["Seis Naciones", "Rugby Championship", "Tri Nations europeo"], i:1, lvl:12},
+  {q:"¿Qué club de Buenos Aires es apodado Cardenales?", a:["SIC", "Newman", "Belgrano"], i:1, lvl:12},
+  {q:"¿Cuál es el largo máximo de una patada de salida válida?", a:["Debe superar la línea de 10m", "Debe salir afuera", "Debe picar 2 veces"], i:0, lvl:13},
+  {q:"¿Qué es un '50:22'?", a:["Regla de scrum", "Kick que pica en 22 rival desde propio 50 y da lineout al que patea", "Señal de árbitro"], i:1, lvl:13},
+  {q:"¿Qué sanción corresponde por no liberar la pelota en el piso?", a:["Penal", "Scrum", "Lineout"], i:0, lvl:13},
+  {q:"¿Qué equipo inglés juega en Twickenham Stoop?", a:["Leicester", "Harlequins", "Saracens"], i:1, lvl:13},
+  {q:"¿Qué país ganó el Mundial 2003?", a:["Inglaterra", "Australia", "Francia"], i:0, lvl:13},
+  {q:"¿Qué rol tiene el fullback en defensa?", a:["Último hombre y recepción de kicks", "Empujar scrum", "Lanzar lineout"], i:0, lvl:14},
+  {q:"¿Qué indica el árbitro con brazo arriba y silbato?", a:["Penal", "Scrum", "Ventaja"], i:0, lvl:14},
+  {q:"¿Qué club argentino es conocido como Marrón?", a:["Belgrano Athletic", "Hindú", "San Luis"], i:0, lvl:14},
+  {q:"¿Qué posición suelen ocupar los números 12 y 13?", a:["Pilares", "Centros", "Wings"], i:1, lvl:14},
+  {q:"¿Qué equipo ganó el Rugby World Cup 2007?", a:["Sudáfrica", "Inglaterra", "Nueva Zelanda"], i:0, lvl:14},
+  {q:"¿Qué es 'crocodile roll' y cómo se sanciona?", a:["Despejar ruck girando rival: peligroso, penal", "Tackle legal", "Empuje en maul"], i:0, lvl:15},
+  {q:"¿Qué indica 'deliberate knock-on' generalmente?", a:["Tarjeta y penal", "Scrum", "Nada"], i:0, lvl:15},
+  {q:"¿Qué nación tiene más títulos mundiales hasta 2023?", a:["Nueva Zelanda", "Sudáfrica", "Australia"], i:1, lvl:15},
+  {q:"¿Qué estadio es la casa del rugby inglés?", a:["Murrayfield", "Twickenham", "Cardiff"], i:1, lvl:15},
+  {q:"¿Qué partido ganaron Los Pumas por primera vez a los All Blacks (año)?", a:["2020", "2015", "2022"], i:0, lvl:15}
+];
+while(QUESTIONS.length<80){ // completar 80 con variaciones
+  const base=[
+    {q:"¿Cuántos jueces de touch asisten al árbitro?", a:["2", "1", "3"], i:0, lvl:5},
+    {q:"¿Qué equipo europeo viste de verde y trébol?", a:["Gales", "Irlanda", "Italia"], i:1, lvl:6},
+    {q:"¿Qué es 'obstrucción' en ataque?", a:["Bloquear defensor sin pelota", "Pisar touch", "Avanzar en offside"], i:0, lvl:9},
+    {q:"¿Qué selección ganó el Mundial 1999?", a:["Australia", "Francia", "Sudáfrica"], i:0, lvl:10},
+    {q:"¿Qué equipo argentino de San Isidro es apodado Zanja?", a:["SIC", "CASI", "Newman"], i:1, lvl:11}
+  ];
+  QUESTIONS.push(base[(QUESTIONS.length)%base.length]);
+}
 
-    async function restarMonedas() {
-      const usuario=document.getElementById("admin-alias").value;
-      const monto=parseInt(document.getElementById("admin-amount").value);
-      await supabase.rpc("restar_monedas",{usuario,monto}); showNotification("Monedas restadas!");
-    }
+/* ===================== UI & LÓGICA ===================== */
+const aliasInput=$('#aliasInput');
+const btnLogin=$('#btnLogin');
+const btnLogout=$('#btnLogout');
+const userBadge=$('#userBadge');
+const loginBox=$('#loginBox');
+const casino=$('#casino');
+const hud=$('#hud');
+const levelChip=$('#levelChip');
+const wheelBet=$('#wheelBet');
+const betInput=$('#betInput');
+const btnBet=$('#btnBet');
+const qText=$('#qText');
+const optList=$('#optList');
+const btnNext=$('#btnNext');
+const timerBar=$('#timerBar');
+const freeInfo=$('#freeInfo');
+const freeLeftEl=$('#freeLeft');
 
-    async function showNotificationGlobal() {
-      const msg=prompt("Mensaje para todos los jugadores:");
-      if(!msg)return;
-      await supabase.from("chat").insert([{ alias:"Vicentinos Challenge", mensaje: msg }]);
-      showNotification("Notificación enviada!");
-    }
-  </script>
+const rankTable=$('#rankTable tbody');
+const chatBox=$('#chatBox');
+const chatInput=$('#chatInput');
+const chatSend=$('#chatSend');
+
+const adminPanel=$('#adminPanel');
+const admUser=$('#admUser');
+const admCoins=$('#admCoins');
+const admAdd=$('#admAdd');
+const admCreate=$('#admCreate');
+const admDelete=$('#admDelete');
+const admBlock=$('#admBlock');
+const admExit=$('#admExit');
+const admClearChat=$('#admClearChat');
+
+function setHUD(u){
+  $('#hudLevel').textContent = u.level||1;
+  levelChip.textContent = u.level||1;
+  $('#hudCoins').textContent = fmt(u.coins||0);
+  $('#hudCorrect').textContent = u.correct_answers||0;
+  $('#hudWrong').textContent = u.wrong_answers||0;
+  const t=(u.correct_answers||0)+(u.wrong_answers||0);
+  $('#hudAvg').textContent = t? Math.round((u.correct_answers/t)*100)+'%':'0%';
+}
+
+async function upsertPlayer(u){
+  if(online && supa){
+    await supa.from('players').upsert({
+      alias:u.alias, coins:u.coins||0, level:u.level||1,
+      correct_answers:u.correct_answers||0, wrong_answers:u.wrong_answers||0,
+      blocked: !!u.blocked
+    });
+  } else {
+    const L=dbGet('players');
+    const i=L.findIndex(x=>x.alias===u.alias);
+    if(i>=0) L[i]=u; else L.push(u);
+    dbSet('players',L);
+  }
+}
+
+async function getPlayer(alias){
+  if(online && supa){
+    const {data}=await supa.from('players').select('*').eq('alias',alias).maybeSingle();
+    return data||null;
+  } else {
+    return dbGet('players').find(x=>x.alias===alias)||null;
+  }
+}
+
+async function ensurePlayer(alias){
+  let u=await getPlayer(alias);
+  if(!u){ u={alias, coins:0, level:1, correct_answers:0, wrong_answers:0, blocked:false}; await upsertPlayer(u);} 
+  return u;
+}
+
+function startTimer(){
+  timeLeft=TIME_PER_QUESTION; timerBar.style.width='100%';
+  if(timer) clearInterval(timer);
+  const total=TIME_PER_QUESTION;
+  timer=setInterval(()=>{
+    timeLeft--; const pct=Math.max(0, (timeLeft/total)*100); timerBar.style.width=pct+'%';
+    if(timeLeft<=0){ clearInterval(timer); lockOptions(); answer(-1); }
+  },1000);
+}
+
+function lockOptions(){ $$('.opt').forEach(el=>el.classList.add('disabled')); }
+function unlockOptions(){ $$('.opt').forEach(el=>el.classList.remove('disabled')); }
+
+function pickQuestion(){
+  // por nivel: 5 preguntas; si se acaban, elegir al azar restante
+  const currentLevel=user.level||1;
+  const pool=QUESTIONS.map((q,idx)=>({q,idx}))
+    .filter(o=> (o.q.lvl===currentLevel || QUESTIONS_PER_LEVEL<=0) && !asked.has(o.idx));
+  let pick=pool[Math.floor(Math.random()*pool.length)];
+  if(!pick){ // no quedan de este nivel -> cualquiera no usada
+    const rest=QUESTIONS.map((q,idx)=>({q,idx})).filter(o=>!asked.has(o.idx));
+    pick=rest[Math.floor(Math.random()*rest.length)];
+  }
+  asked.add(pick.idx);
+  return pick.q;
+}
+
+function renderQuestion(){
+  currentQ=pickQuestion();
+  qText.textContent=currentQ.q;
+  optList.innerHTML='';
+  currentQ.a.forEach((txt,ix)=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=txt; b.onclick=()=>{ answer(ix); };
+    optList.appendChild(b);
+  });
+  btnNext.classList.add('disabled');
+  startTimer(); unlockOptions();
+}
+
+async function answer(ix){
+  lockOptions(); if(timer) clearInterval(timer);
+  const correct = ix===currentQ.i;
+  $$('.opt').forEach((el,i)=>{
+    if(i===currentQ.i) el.classList.add('correct');
+    if(i===ix && !correct) el.classList.add('wrong');
+  });
+  // economía
+  const freeUse = freeLeft>0;
+  if(freeUse){ freeLeft--; freeLeftEl.textContent=freeLeft; }
+  if(!freeUse){
+    if(correct) user.coins += currentBet; else user.coins = Math.max(0, user.coins - currentBet);
+  }
+  if(correct) user.correct_answers = (user.correct_answers||0)+1; else user.wrong_answers=(user.wrong_answers||0)+1;
+  levelCount++;
+  if(levelCount>=QUESTIONS_PER_LEVEL){ user.level=Math.min(TOTAL_LEVELS, (user.level||1)+1); levelCount=0; asked.clear(); toast('¡Subiste de nivel!'); }
+  setHUD(user); await upsertPlayer(user); refreshRanking();
+  btnNext.classList.remove('disabled');
+}
+
+function setBet(){
+  let v=parseInt(betInput.value||MIN_BET,10);
+  if(isNaN(v)) v=MIN_BET; v=Math.max(MIN_BET, v);
+  currentBet=v; wheelBet.textContent=fmt(v);
+}
+
+function scoreRow(u){
+  const r=u.correct_answers||0, w=u.wrong_answers||0; const t=r+w; const acc=t? r/t:0; const coins=u.coins||0; const lvl=u.level||1;
+  // ponderado 70% accuracy, 20% log monedas, 10% nivel
+  return acc*0.7 + (Math.log10(Math.max(1,coins+1))/3)*0.2 + (lvl/TOTAL_LEVELS)*0.1;
+}
+
+async function refreshRanking(){
+  let list=[];
+  if(online && supa){ const {data}=await supa.from('players').select('*'); list=data||[]; }
+  else { list=dbGet('players'); }
+  list.sort((a,b)=> scoreRow(b)-scoreRow(a));
+  rankTable.innerHTML='';
+  list.slice(0,50).forEach((p,idx)=>{
+    const r=p.correct_answers||0, w=p.wrong_answers||0; const t=r+w; const avg=t? Math.round((r/t)*100):0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${idx+1}</td><td>${p.alias}</td><td>${avg}%</td><td>${p.level||1}</td><td>${fmt(p.coins||0)}</td>`;
+    rankTable.appendChild(tr);
+  });
+}
+
+/* ===================== LOGIN ===================== */
+async function doLogin(){
+  const v=(aliasInput.value||'').trim(); if(!v){ toast('Ingresá un alias o token'); return; }
+  if(v===ADMIN_TOKEN){
+    loginBox.classList.add('hidden'); adminPanel.classList.remove('hidden'); $('#welcome').classList.remove('hidden'); $('#welcome').textContent='Modo administrador activo';
+    $('#btnLogout').style.display='inline-block'; userBadge.classList.add('hidden'); casino.classList.add('hidden'); hud.classList.add('hidden');
+    return;
+  }
+  user = await ensurePlayer(v);
+  freeLeft = parseInt(localStorage.getItem(`free:${user.alias}`)||FREE_QUESTIONS,10);
+  setHUD(user);
+  userBadge.classList.remove('hidden'); userBadge.textContent=`${user.alias}`;
+  loginBox.classList.add('hidden'); casino.classList.remove('hidden'); hud.classList.remove('hidden'); $('#welcome').classList.remove('hidden');
+  freeLeftEl.textContent=freeLeft; freeInfo.classList.toggle('hidden', freeLeft<=0);
+  setBet(); renderQuestion(); refreshRanking(); subscribeRealtime();
+}
+
+function doLogout(){
+  user=null; loginBox.classList.remove('hidden'); adminPanel.classList.add('hidden'); casino.classList.add('hidden'); hud.classList.add('hidden'); userBadge.classList.add('hidden'); $('#btnLogout').style.display='none'; $('#welcome').classList.add('hidden');
+}
+
+btnLogin.onclick=doLogin; btnLogout.onclick=doLogout;
+btnBet.onclick=()=>{ setBet(); toast('Apuesta lista'); renderQuestion(); };
+betInput.oninput=()=>{ setBet(); };
+btnNext.onclick=()=>{ if(btnNext.classList.contains('disabled')) return; renderQuestion(); };
+
+window.addEventListener('beforeunload',()=>{ if(user) localStorage.setItem(`free:${user.alias}`, String(freeLeft)); });
+
+/* ===================== CHAT ===================== */
+async function loadChat(){
+  let msgs=[]; if(online && supa){ const {data}=await supa.from('messages').select('*').order('ts',{ascending:true}); msgs=data||[]; }
+  else { msgs=dbGet('messages'); }
+  chatBox.innerHTML='';
+  msgs.forEach(m=> appendMsg(m));
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function appendMsg(m){
+  const d=document.createElement('div'); d.className='msg'+(m.admin?' admin':'');
+  const ts = m.ts? new Date(m.ts): new Date();
+  d.innerHTML = `<span class="who">${m.alias}</span> <span style="opacity:.6;font-size:12px">${ts.toLocaleTimeString()}</span> — ${m.text}`;
+  chatBox.appendChild(d);
+}
+
+async function sendMsg(){
+  const txt=(chatInput.value||'').trim(); if(!txt) return;
+  if(user && user.blocked){ toast('Usuario bloqueado para chatear'); return; }
+  const msg={ id: Date.now(), alias: user? user.alias:"anon", text: txt, ts: new Date().toISOString(), admin: !user && adminPanel&&!loginBox.classList.contains('hidden') };
+  if(online && supa){ await supa.from('messages').insert(msg); }
+  else { const L=dbGet('messages'); L.push(msg); dbSet('messages',L); appendMsg(msg); }
+  chatInput.value='';
+}
+
+chatSend.onclick=sendMsg; chatInput.addEventListener('keydown',e=>{ if(e.key==='Enter') sendMsg(); });
+
+/* ===================== ADMIN ===================== */
+admExit.onclick=()=>{ adminPanel.classList.add('hidden'); loginBox.classList.remove('hidden'); };
+
+async function adminEnsure(alias){ let u=await getPlayer(alias); if(!u){ u={alias, coins:0, level:1, correct_answers:0, wrong_answers:0, blocked:false}; await upsertPlayer(u);} return u; }
+
+admCreate.onclick=async()=>{ const a=(admUser.value||'').trim(); if(!a) return toast('Alias requerido'); await adminEnsure(a); toast('Usuario creado'); refreshRanking(); };
+admDelete.onclick=async()=>{ const a=(admUser.value||'').trim(); if(!a) return toast('Alias requerido'); if(online && supa){ await supa.from('players').delete().eq('alias',a);} else { let L=dbGet('players').filter(x=>x.alias!==a); dbSet('players',L);} toast('Usuario eliminado'); refreshRanking(); };
+admAdd.onclick=async()=>{ const a=(admUser.value||'').trim(); const v=parseInt(admCoins.value||0,10); if(!a) return toast('Alias requerido'); let u=await adminEnsure(a); u.coins=(u.coins||0)+v; if(u.coins<0) u.coins=0; await upsertPlayer(u); toast('Saldo actualizado'); refreshRanking(); };
+admBlock.onclick=async()=>{ const a=(admUser.value||'').trim(); if(!a) return toast('Alias requerido'); let u=await adminEnsure(a); u.blocked=!u.blocked; await upsertPlayer(u); toast(u.blocked? 'Usuario bloqueado':'Usuario desbloqueado'); };
+admClearChat.onclick=async()=>{ if(online && supa){ await supa.from('messages').delete().neq('id', -1);} else { dbSet('messages',[]); chatBox.innerHTML=''; } toast('Chat limpio'); };
+
+/* ===================== REALTIME ===================== */
+function subscribeRealtime(){ if(!online||!supa) return; try{
+  supa.channel('any').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, payload=>{ appendMsg(payload.new); chatBox.scrollTop=chatBox.scrollHeight; }).subscribe();
+  supa.channel('any2').on('postgres_changes',{event:'INSERT',schema:'public',table:'players'}, ()=>refreshRanking()).on('postgres_changes',{event:'UPDATE',schema:'public',table:'players'}, ()=>refreshRanking()).subscribe();
+}catch(e){}
+}
+
+/* ===================== INIT ===================== */
+(async function(){
+  $('#btnLogout').style.display='none';
+  await loadChat(); await refreshRanking();
+  freeInfo.classList.add('hidden');
+})();
+</script>
 </body>
 </html>
