@@ -71,19 +71,48 @@
     const SUPABASE_URL = "https://aqkqbtunbyifbfrvkpxv.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3FidHVuYnlpZmJmcnZrcHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyOTg5NDgsImV4cCI6MjA3MDg3NDk0OH0.Xqtii5yiIO6tFOzzqza70ZA7N1KmbcTIkoNtV5YCVDY";
 
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const status = document.getElementById('status');
-    const toast = document.getElementById('toast');
+    let supabase = null;
+    let online = false;
+
+    window.addEventListener('load', () => {
+      if (typeof Supabase === 'undefined') {
+        document.getElementById('status').textContent = '❌ Script no cargado';
+        document.getElementById('toast').textContent = 'Error de carga';
+        document.getElementById('toast').classList.add('show');
+        setTimeout(() => document.getElementById('toast').classList.remove('show'), 2000);
+        return;
+      }
+
+      try {
+        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        online = true;
+        console.log('✅ Conectado a Supabase');
+        document.getElementById('status').textContent = '✅ Listo para jugar';
+      } catch (e) {
+        console.error("Error al conectar con Supabase:", e);
+        online = false;
+        document.getElementById('status').textContent = '❌ Error al conectar';
+        document.getElementById('toast').textContent = 'Error al conectar con el servidor';
+        document.getElementById('toast').classList.add('show');
+        setTimeout(() => document.getElementById('toast').classList.remove('show'), 2000);
+      }
+    });
 
     function showToast(msg) {
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
     }
 
     async function login() {
       const alias = document.getElementById('alias').value.trim();
       if (!alias) return alert('Ingresa un alias');
+
+      if (!online || !supabase) {
+        alert('No se puede conectar al servidor');
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -93,23 +122,14 @@
         if (error) throw error;
 
         localStorage.setItem('currentAlias', alias);
-        status.textContent = `¡Bienvenido, ${alias}!`;
+        document.getElementById('status').textContent = `¡Bienvenido, ${alias}!`;
         showToast('✅ Conectado a Supabase');
       } catch (err) {
         console.error(err);
-        status.textContent = '❌ Error al conectar';
+        document.getElementById('status').textContent = '❌ Error al conectar';
         showToast('Error: ' + err.message);
       }
     }
-
-    window.addEventListener('load', () => {
-      if (typeof Supabase === 'undefined') {
-        status.textContent = '❌ Script no cargado';
-        showToast('Error de carga');
-      } else {
-        status.textContent = '✅ Listo para jugar';
-      }
-    });
   </script>
 </body>
 </html>
