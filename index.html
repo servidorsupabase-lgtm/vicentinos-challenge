@@ -250,6 +250,19 @@
           <div class="stat">Promedio: <b id="hudAvg">0%</b></div>
         </div>
 
+        <div id="adminPanel" class="card hidden" style="margin-top:12px">
+          <div class="section-title">🛡️ Panel Admin</div>
+          <div class="row">
+            <input id="admUser" placeholder="Alias usuario" />
+            <input id="admCoins" type="number" placeholder="Monedas (+/-)" />
+            <button id="admAdd">Sumar</button>
+            <button id="admSub">Restar</button>
+            <button id="admBlock">Bloquear</button>
+            <button id="admClearChat">Limpiar chat</button>
+            <button id="admExit">Salir</button>
+          </div>
+        </div>
+
         <div id="casino" class="hidden">
           <div class="wheel"><div class="center"><div style="font-size:12px;opacity:.8">Apuesta</div><div id="wheelBet" style="font-size:18px">600</div></div></div>
           <div class="row">
@@ -389,7 +402,7 @@
       {q:"¿Cuántos pilares hay en la primera línea?", a:["1", "2", "3"], i:1, lvl:5},
       {q:"¿Qué posición usa el número 15?", a:["Fullback", "Wing", "Centro"], i:0, lvl:5},
       {q:"¿Qué país es apodado los Springboks?", a:["Inglaterra", "Sudáfrica", "Irlanda"], i:1, lvl:5},
-      {q:"¿Qué torneo del Hemisferio Norte reúne a seis selecciones europeas?", a:["Tri Nations", "Seis Naciones", "Nations Cup"], i:1, lvl:6},
+      {q:"¿Qué torneo del Hemisfero Norte reúne a seis selecciones europeas?", a:["Tri Nations", "Seis Naciones", "Nations Cup"], i:1, lvl:6},
       {q:"¿Qué selección argentina es conocida como Los Pumas?", a:["M20", "Mayor", "Seven"], i:1, lvl:6},
       {q:"¿Qué hace el hooker en el scrum?", a:["Patea la pelota hacia atrás", "Empuja desde afuera", "Dirige la línea"], i:0, lvl:6},
       {q:"¿Cuándo se marca un penal try?", a:["Falta táctica que evita try probable", "Try con patada", "Choque peligroso"], i:0, lvl:6},
@@ -462,6 +475,15 @@
     const chatBox = $('#chatBox');
     const chatInput = $('#chatInput');
     const chatSend = $('#chatSend');
+    const adminPanel = $('#adminPanel');
+    const admUser = $('#admUser');
+    const admCoins = $('#admCoins');
+    const admAdd = $('#admAdd');
+    const admSub = $('#admSub');
+    const admBlock = $('#admBlock');
+    const admClearChat = $('#admClearChat');
+    const admExit = $('#admExit');
+    const btnBack = $('#btnBack');
 
     // ===================== FUNCIONES =====================
     function setHUD(u) {
@@ -639,34 +661,20 @@
       const v = (aliasInput.value || '').trim();
       if (!v) { toast('Ingresá un alias'); return; }
       if (v === ADMIN_TOKEN) {
-        user = await ensurePlayer('anon');
-        user.alias = 'anon';
-        user.coins = 10000;
-        user.level = 15;
-        user.correct_answers = 100;
-        user.wrong_answers = 0;
-        user.blocked = false;
-        setHUD(user);
-        userBadge.classList.remove('hidden');
-        userBadge.textContent = 'anon';
         loginBox.classList.add('hidden');
-        casino.classList.remove('hidden');
-        hud.classList.remove('hidden');
+        casino.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
         btnBack.classList.remove('hidden');
+        userBadge.classList.add('hidden');
+        hud.classList.add('hidden');
         $('#welcome').textContent = 'Modo administrador activo';
-        freeLeft = 0;
-        freeInfo.classList.add('hidden');
-        setBet();
-        renderQuestion();
-        subscribeRealtime();
-        localStorage.setItem('currentAlias', 'anon');
         return;
       }
       user = await ensurePlayer(v);
       freeLeft = parseInt(localStorage.getItem(`free:${user.alias}`) || FREE_QUESTIONS, 10);
       setHUD(user);
       userBadge.classList.remove('hidden');
-      userBadge.textContent = user.alias;
+      userBadge.textContent = `${user.alias}`;
       loginBox.classList.add('hidden');
       casino.classList.remove('hidden');
       hud.classList.remove('hidden');
@@ -688,6 +696,7 @@
       user = null;
       loginBox.classList.remove('hidden');
       casino.classList.add('hidden');
+      adminPanel.classList.add('hidden');
       hud.classList.add('hidden');
       userBadge.classList.add('hidden');
       btnBack.classList.add('hidden');
@@ -714,11 +723,12 @@
       d.className = 'msg' + (m.admin ? ' admin' : '');
       const ts = m.ts ? new Date(m.ts) : new Date();
       d.innerHTML = `<span class="who">${m.alias}</span> <span style="opacity:.6;font-size:12px">${ts.toLocaleTimeString()}</span> — ${m.text}`;
-      if (m.admin || user?.alias === 'anon') {
+      if (m.admin || user?.alias === 'admin') {
         const controls = document.createElement('div');
         controls.className = 'controls';
         controls.innerHTML = `
           <button class="btn-del" onclick="deleteMsg(${m.id})">Borrar</button>
+          <button class="btn-block" onclick="blockUser('${m.alias}')">Bloquear</button>
         `;
         d.appendChild(controls);
       }
@@ -731,7 +741,7 @@
       if (!txt) return;
       if (user && user.blocked) { toast('Usuario bloqueado'); return; }
       const alias = user ? user.alias : "anon";
-      const isAdmin = !user && user?.alias === 'anon';
+      const isAdmin = !user && adminPanel.classList.contains('hidden') === false;
       const msg = {
         id: Date.now(),
         alias: alias,
@@ -748,6 +758,7 @@
         appendMsg(msg);
       }
       chatInput.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     window.deleteMsg = async (id) => {
@@ -760,16 +771,73 @@
       toast('Mensaje eliminado');
     };
 
+    window.blockUser = async (alias) => {
+      let u = await getPlayer(alias);
+      if (!u) u = { alias, coins: 0, level: 1, blocked: false };
+      u.blocked = true;
+      await upsertPlayer(u);
+      toast(`Usuario ${alias} bloqueado`);
+    };
+
+    // ===================== ADMIN =====================
+    admExit.onclick = () => {
+      adminPanel.classList.add('hidden');
+      loginBox.classList.remove('hidden');
+      btnBack.classList.add('hidden');
+    };
+
+    async function adminEnsure(alias) {
+      let u = await getPlayer(alias);
+      if (!u) {
+        u = { alias, coins: 0, level: 1, correct_answers: 0, wrong_answers: 0, blocked: false };
+        await upsertPlayer(u);
+      }
+      return u;
+    }
+
+    admAdd.onclick = async () => {
+      const a = (admUser.value || '').trim();
+      const v = parseInt(admCoins.value || 0, 10);
+      if (!a) return toast('Alias requerido');
+      let u = await adminEnsure(a);
+      u.coins = (u.coins || 0) + v;
+      if (u.coins < 0) u.coins = 0;
+      await upsertPlayer(u);
+      toast('Saldo actualizado');
+      refreshRanking();
+    };
+    admSub.onclick = async () => {
+      const a = (admUser.value || '').trim();
+      const v = parseInt(admCoins.value || 0, 10);
+      if (!a) return toast('Alias requerido');
+      let u = await adminEnsure(a);
+      u.coins = (u.coins || 0) - v;
+      if (u.coins < 0) u.coins = 0;
+      await upsertPlayer(u);
+      toast('Saldo actualizado');
+      refreshRanking();
+    };
+    admBlock.onclick = async () => {
+      const a = (admUser.value || '').trim();
+      if (!a) return toast('Alias requerido');
+      let u = await adminEnsure(a);
+      u.blocked = !u.blocked;
+      await upsertPlayer(u);
+      toast(u.blocked ? 'Usuario bloqueado' : 'Usuario desbloqueado');
+    };
+    admClearChat.onclick = async () => {
+      if (online && supa) await supa.from('messages').delete().neq('id', -1);
+      else { dbSet('messages', []); chatBox.innerHTML = ''; }
+      toast('Chat limpio');
+    };
+
     // ===================== REALTIME =====================
     function subscribeRealtime() {
       if (!online || !supa) return;
       try {
         supa.channel('chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
           appendMsg(payload.new);
-        }).subscribe();
-
-        supa.channel('chat').on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, () => {
-          loadChat();
+          chatBox.scrollTop = chatBox.scrollHeight;
         }).subscribe();
 
         supa.channel('players').on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
@@ -783,6 +851,7 @@
     btnLogout.onclick = doLogout;
     btnBet.onclick = () => { setBet(); toast('Apuesta lista'); renderQuestion(); };
     betInput.oninput = () => setBet();
+    btnNext.onclick = () => { if (!btnNext.classList.contains('disabled')) renderQuestion(); };
     chatSend.onclick = sendMsg;
     chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
   </script>
